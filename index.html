@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSC Hisaab – Finance Records</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0b1b3a"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="CSC Hisaab">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--bg:#f1f4f9;--s:#fff;--l:#d9dfeb;--t:#17202e;--m:#566176;--p:#1d4ed8;--ps:#e6edff;--g:#0f9d58;--r:#d92d20}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px "Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--t);display:flex;min-height:100vh}
+nav{width:220px;flex:none;background:#0f1b33;color:#cfd8ea;padding:16px 10px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+nav h1{color:#fff;font-size:18px;padding:4px 10px 14px}
+nav h1 small{display:block;font-size:11px;font-weight:400;color:#8fa0c0;margin-top:2px}
+nav button{background:none;border:none;color:inherit;font:inherit;font-weight:600;text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer}
+nav button:hover{background:#1a2a4d}nav button.on{background:var(--p);color:#fff}
+#bk{margin-top:auto;font-size:12px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;line-height:1.35}
+#bk.on{background:#11452e;color:#b7f0d1}#bk.off{background:#5a1d17;color:#ffd5d0}
+main{flex:1;min-width:0;padding:22px}
+h2{font-size:22px;margin-bottom:14px}h3{font-size:16px;margin-bottom:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.c,.box{background:var(--s);border:1px solid var(--l);border-radius:12px}
+.c{padding:14px}.c small{color:var(--m)}.c b{display:block;font-size:22px;margin-top:4px}
+.box{padding:16px;margin-bottom:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--m)}
+input,select{padding:8px 10px;border:1px solid var(--l);border-radius:8px;font:inherit;color:var(--t);background:#fff;min-width:0}
+.amt.bad{border-color:var(--r);background:#fff3f1}
+input:focus,select:focus{outline:2px solid var(--ps);border-color:var(--p)}
+.b,.g2,.x{font:inherit;font-weight:600;border-radius:8px;cursor:pointer;padding:9px 14px;border:1px solid var(--p)}
+.b{background:var(--p);color:#fff}.g2{background:#fff;color:var(--p)}
+.x{padding:3px 8px;border-color:var(--l);background:#fff;color:var(--r)}
+.w{overflow-x:auto}table{width:100%;border-collapse:collapse}
+th,td{padding:9px 10px;border-bottom:1px solid var(--l);text-align:left;vertical-align:middle}
+td:last-child,td.nw,th.nw{white-space:nowrap}
+tr.rd td{background:#fff3f1}tr.gr td{background:#eefaf3}
+tr.rd td:first-child{box-shadow:inset 4px 0 0 var(--r)}tr.gr td:first-child{box-shadow:inset 4px 0 0 var(--g)}
+.st .rk{min-width:200px;word-break:break-word}.st .sv{min-width:110px}
+.st thead tr:first-child th{white-space:nowrap;user-select:none}
+tr.fr th{padding:4px 6px;background:#f7f9fc}
+tr.tt td{font-weight:700;background:#f1f4fa;border-top:2px solid var(--l)}
+#lock{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:30;padding:16px;overflow:auto}
+.sb label,.sb input{width:100%}.sb{min-width:min(420px,92vw)}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:10px}.sg p{grid-column:1/-1;margin:0}
+.cb{position:relative}.cb input[type=text],#scn{width:240px}
+.cbl{display:none;position:absolute;left:0;top:100%;z-index:15;min-width:280px;max-height:290px;overflow:auto;background:#fff;border:1px solid var(--l);border-radius:8px;box-shadow:0 8px 24px rgba(15,27,51,.18);margin-top:2px}
+.cbl div{padding:8px 12px;cursor:pointer;font-weight:400;font-size:14px;color:var(--t)}
+.cbl div.on,.cbl div:hover{background:var(--ps)}.cbl small{color:var(--m);margin-left:6px}.cbl small.r{color:var(--r)}
+input[type=checkbox],input[type=radio]{width:auto;padding:0;min-width:0}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f1b33;color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:25;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#toast button{margin-left:14px;background:#fff;color:var(--p);border:none;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer}
+.fi{width:100%;min-width:72px;padding:5px 6px;font-size:12px;border:1px solid var(--l);border-radius:6px;background:#fff;font-weight:400}
+th{font-size:12px;color:var(--m)}.e{text-align:center;color:var(--m);padding:20px}
+.m{color:var(--m);margin:8px 0}.g{color:var(--g)}.r{color:var(--r)}
+.bar{height:7px;background:#eef1f7;border-radius:4px;margin:2px 0;min-width:120px}.bar i{display:block;height:100%;border-radius:4px}
+.lk{background:none;border:none;color:var(--p);font:inherit;font-weight:700;cursor:pointer;text-align:left;padding:0}
+.wam{display:flex;flex-direction:column;align-items:center;gap:10px}.wam img{max-width:100%;width:300px;border:1px solid var(--l);border-radius:12px}.wam .row{justify-content:center}
+.md{display:none;position:fixed;inset:0;background:rgba(15,27,51,.5);align-items:center;justify-content:center;z-index:9}
+.mb{background:#fff;border-radius:14px;padding:20px;width:min(420px,92vw);max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.seg{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;max-width:420px}
+.seg button{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;font:inherit;color:var(--t);background:#fff;border:1px solid var(--l);border-radius:10px;cursor:pointer}
+.seg button small{color:var(--m)}.seg button.on{border-color:var(--p);background:var(--ps);box-shadow:0 0 0 1px var(--p)}
+.upi{display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start}.ul{flex:1;min-width:280px;max-width:440px}
+.qrw{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:240px}
+#lqr{background:#fff;padding:10px;border:1px solid var(--l);border-radius:10px;min-width:60px;min-height:60px}
+#qamt{font-size:26px;color:var(--g)}
+.fy{color:#8fa0c0;padding:0 10px 12px;font-size:11px}.fy select{width:100%;margin-top:4px;background:#1a2a4d;color:#fff;border:1px solid #2b3d66}
+#pr{display:none}
+#setup{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.sb{background:#fff;border:1px solid var(--l);border-radius:14px;padding:26px;max-width:500px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+@page{size:A4;margin:12mm}
+@media print{nav,main,#md,#waMd,#lock,#setup,#toast{display:none!important}html,body{height:auto!important;min-height:0!important}body{display:block;background:#fff;padding:0!important}#pr{display:block;padding:8px}#pr h2{margin-bottom:4px}#pr .m{font-size:12px}th,td{white-space:normal}}
+body{font-family:Inter,"Segoe UI",system-ui,Arial,sans-serif}
+nav{background:linear-gradient(180deg,#0a1630 0%,#14285a 100%);box-shadow:4px 0 24px rgba(10,22,48,.25)}
+nav h1{font-size:19px;letter-spacing:.3px}
+nav button{border-radius:10px;transition:background .15s}
+nav button.on{background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 4px 14px rgba(37,99,235,.45)}
+main{padding:26px 30px}
+h2{font-size:24px;letter-spacing:-.2px}
+.box,.c{border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.06),0 6px 18px rgba(16,24,40,.05);border-color:#e3e8f2}
+.c b{font-size:23px}
+.b{box-shadow:0 2px 8px rgba(29,78,216,.28)}.b:hover{filter:brightness(1.07)}
+th{text-transform:uppercase;letter-spacing:.4px;font-size:11px}
+.dg{font-size:13px;font-weight:700;color:var(--m);margin:4px 2px 8px}
+.cards.dcs{grid-template-columns:repeat(auto-fill,minmax(205px,1fr))}
+.dc{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--s);border:1px solid #e3e8f2;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.06),0 6px 18px rgba(16,24,40,.05)}
+.dc .ic{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:21px;background:var(--ps)}
+.dc .ic.g{background:#e4f6ec}.dc .ic.r{background:#fdecea}
+.dc small{display:block;color:var(--m);font-size:12.5px;line-height:1.3}
+.dc b{display:block;font-size:22px;margin-top:3px;font-variant-numeric:tabular-nums}
+.dsec>summary{cursor:pointer;font-size:16px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.dsec>summary::-webkit-details-marker{display:none}.dsec>summary::after{content:"▾ Kholein";font-size:12px;color:var(--p);font-weight:600}
+.dsec[open]>summary::after{content:"▴ Band karein"}.dsec[open]>summary{margin-bottom:12px}
+.tb{display:flex;gap:8px;margin-bottom:12px}
+#pr .inv{font-size:13px;color:#111}.ih{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #111;padding-bottom:8px}.ih h2{margin:0 0 4px}
+.ib{margin:10px 0;line-height:1.5}.it{width:100%;border-collapse:collapse}.it th,.it td{border:1px solid #888;padding:6px 8px;text-transform:none;letter-spacing:0;font-size:13px;color:#111}.it .n,.itot{text-align:right}
+.itot{margin-left:auto;width:270px;margin-top:8px;line-height:1.6}.gt{font-size:16px;font-weight:700;border-top:1px solid #111;margin-top:4px;padding-top:4px}
+.iw{margin-top:10px}.isg{display:flex;justify-content:space-between;align-items:flex-end;margin-top:34px}
+.pl{width:100%;border-collapse:collapse}.pl thead{display:table-header-group}.pl tr{page-break-inside:avoid}
+.pl td.ph{border:none;border-bottom:2px solid #111;padding:0 0 8px;white-space:normal}.pl td.ph h2{margin:0 0 2px}.pl td.ph h3{margin:6px 0 2px;font-size:15px}
+tr.cl td{opacity:.6}
+.ty{text-align:center;margin-top:22px;font-size:17px;font-weight:700;border-top:1px dashed #888;padding-top:10px}.ty small{font-weight:400;font-size:12px}
+:root{--o:#f97316}
+.th{font-family:"Courier New",monospace;font-size:12px;color:#000;line-height:1.35}.th80{width:72mm}.th58{width:50mm;font-size:11px}
+.tc{text-align:center}.tn{font-size:15px}.tl{display:flex;justify-content:space-between;gap:6px}.ts{font-size:10px;color:#333}.tb2{font-weight:700}.th hr{border:none;border-top:1px dashed #000;margin:5px 0}
+@media(max-width:800px){body{flex-direction:column}nav{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap}nav h1{width:100%}#bk{margin:0;width:100%}}
+tr.op td{background:#fff8e6;font-weight:600}
+@media(max-width:800px){
+  nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:8px;position:sticky;top:0;z-index:6;gap:4px;align-items:center}
+  nav h1{display:none}nav button{white-space:nowrap;padding:8px 10px;font-size:13px}.fy{min-width:150px;padding:0 6px}
+  #bk{min-width:170px;width:auto;margin:0}main{padding:14px}.cbl{max-width:92vw;min-width:240px}.box{padding:12px}
+}
+</style>
+</head>
+<body>
+<nav>
+  <h1>CSC Hisaab<small>Income, expense and ledger</small></h1>
+  <label class="fy">Vitt varsh (F-Y: Apr se Mar)<select id="fysel" onchange="setFY(this.value)"></select></label>
+  <button data-v="dash" onclick="go('dash')">🏠 Dashboard</button>
+  <button data-v="sales" onclick="go('sales')">📒 Daily sales</button>
+  <button data-v="inv" onclick="go('inv')">🧾 Receipt / Invoice</button>
+  <button data-v="cust" onclick="go('cust')">👥 Customers</button>
+  <button data-v="job" onclick="go('job')">📋 Work Tracker</button>
+  <button data-v="exp" onclick="go('exp')">💸 Expenses</button>
+  <button data-v="lend" onclick="go('lend')">🏦 Lenders</button>
+  <button data-v="ast" onclick="go('ast')">🖥️ Assets</button>
+  <button data-v="gst" onclick="go('gst')">📊 GST</button>
+  <button data-v="bk" onclick="go('bk')">⚙️ Backup and Excel</button>
+  <button onclick="lockNow()">🔒 Lock karein</button>
+  <div id="bk" class="off" onclick="bkClick()"></div>
+</nav>
+<main id="main"></main>
+<div id="md" class="md" onclick="if(event.target===this)closeEd()"></div>
+<div id="pr"></div>
+<div id="toast"></div>
+<div id="lock"><div class="sb" id="lockBox"></div></div>
+<div id="setup"><div class="sb"><h2>Data kahan save karein?</h2>
+<div id="setDrive"><b>☁ Google Drive (kahin se bhi, phone par bhi)</b>
+<p class="m">Data aapke apne Google Drive me save hota hai. Computer aur phone dono par wahi data khulega. Is app ke server par kuch nahi rehta.</p>
+<div id="cidBox" style="display:none"><input id="cidIn" placeholder="Google Client ID (...apps.googleusercontent.com)" style="width:100%;margin-bottom:8px"></div>
+<button class="b" id="driveBtn" onclick="driveStart()">Google Drive se jodein</button>
+<button class="lk" id="offBtn" style="display:none" onclick="driveOffline()">Internet nahi hai: pichhla saved data kholein</button></div>
+<hr style="margin:16px 0;border:0;border-top:1px solid #e3e8f2">
+<div id="setFolder"><b>💾 Computer ka folder</b>
+<p class="m">Naya folder banao (jaise <b>D:\CSC-Data</b>) aur use chuno. Desktop, Documents ya Downloads folder seedha na chunein, unke andar ka koi folder chunein. Purana data chahiye to wahi purana folder chuno. Ye sirf computer ke Chrome / Edge me chalta hai.</p>
+<button class="b" id="setupBtn" onclick="pickDir()">Folder chunein</button></div>
+<p class="m r" id="setupMsg"></p>
+<button class="lk" onclick="useLocal()">Bina folder ke chalayein (surakshit nahi)</button>
+<button class="lk" onclick="setCid()" style="margin-top:6px">Google Client ID badlein</button></div></div>
+<script>
+const KEY = "csc_hisaab_v1";
+const $ = id => document.getElementById(id), v = id => $(id).value;
+const h = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const m = n => { n = Math.round((Number(n) + Number.EPSILON) * 100) / 100; if (!n) n = 0; return (n < 0 ? "-" : "") + "₹" + Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 2 }); };
+const balLbl = b => b > 0 ? "Customer se lena hai" : b < 0 ? "Customer ko dena hai / Advance" : "Hisaab barabar";
+const balCls = b => b > 0 ? "r" : b < 0 ? "g" : "";
+const fd = d => d ? d.split("-").reverse().join("-") : "";
+function safeCalc(src){
+  const s = String(src).replace(/,/g, "").replace(/×/g, "*").replace(/÷/g, "/").replace(/\s+/g, "");
+  if (!s || !/^[0-9+\-*/().]+$/.test(s)) return null;
+  let i = 0; const fail = () => { throw 0; };
+  const prim = () => {
+    if (s[i] === "(") { i++; const x = add(); if (s[i] !== ")") fail(); i++; return x; }
+    if (s[i] === "-") { i++; return -prim(); }
+    if (s[i] === "+") { i++; return prim(); }
+    const mm = s.slice(i).match(/^(\d+\.?\d*|\.\d+)/); if (!mm) fail(); i += mm[0].length; return parseFloat(mm[0]);
+  };
+  const mul = () => { let a = prim(); while (s[i] === "*" || s[i] === "/") { const o = s[i++], b = prim(); if (o === "*") a *= b; else { if (b === 0) fail(); a /= b; } } return a; };
+  const add = () => { let a = mul(); while (s[i] === "+" || s[i] === "-") { const o = s[i++], b = mul(); a = o === "+" ? a + b : a - b; } return a; };
+  try { const out = add(); if (i !== s.length || !isFinite(out)) return null; return Math.round((out + Number.EPSILON) * 100) / 100; } catch (e) { return null; }
+}
+function calcField(el){
+  const t = (el.value || "").trim(), flag = on => { if (el.classList && el.classList.toggle) el.classList.toggle("bad", on); };
+  if (!t) { flag(false); return ""; }
+  if (/^[-+]?\d*\.?\d+$/.test(t)) { flag(false); return "plain"; }
+  const x = safeCalc(t); if (x === null) { flag(true); return "bad"; }
+  flag(false); el.value = String(x);
+  if (el.dispatchEvent && typeof Event !== "undefined") el.dispatchEvent(new Event("input", { bubbles: true }));
+  return "changed";
+}
+const N = x => { if (typeof x === "number") return x || 0; const t = String(x == null ? "" : x).trim(); if (!t) return 0; if (/^[-+]?\d*\.?\d+$/.test(t)) return parseFloat(t); const c = safeCalc(t); return c === null ? (parseFloat(t) || 0) : c; };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+const fresh = () => ({ gst: { on: false, from: "", gstin: "", state: "06", rate: 18, mode: "incl", rates: {}, sac: {}, defSac: "998599" }, inv: [], jobs: [], galla: {}, quick: [{ svc: "PAN Card", amt: 107 }, { svc: "Photo", amt: 50 }, { svc: "Aadhaar Print", amt: 30 }, { svc: "Photocopy", amt: 5 }, { svc: "Online Form", amt: 100 }], gstRet: [], seq: {}, ui: { sec: {} }, upis: [], upiSel: 0, shop: { name: "APNA CSC", phone: "", addr: "" }, customers: [], sales: [], payments: [], expenses: [], parties: [], ptx: [], assets: [], svc: ["Aadhaar", "PAN card", "Photo", "Form fill", "Print and Xerox", "Online apply"] });
+let D = fresh();
+D = Object.assign(fresh(), D);
+let CQ = "", lastD = today(), LD0 = lastD, FY = fyOf(today());
+let V = "dash", L = null, P = null;
+
+/* ---------- storage: data folder ---------- */
+const FILE = "CSC-Hisaab-Data.json";
+let dir = null, pendDir = null, lastMod = 0, local = false, pending = 0, busy = Promise.resolve(), st = { last: null, err: "" };
+const lsLoad = () => { try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch (e) {} return null; };
+const has = x => !!x && ["sales", "customers", "expenses", "parties", "assets", "payments"].some(k => (x[k] || []).length);
+const idb = () => new Promise((ok, no) => { const q = indexedDB.open("csc", 1); q.onupgradeneeded = () => q.result.createObjectStore("k"); q.onsuccess = () => ok(q.result); q.onerror = no; });
+const idbGet = async k => { const d = await idb(); return new Promise(ok => { const t = d.transaction("k").objectStore("k").get(k); t.onsuccess = () => ok(t.result); }); };
+const idbSet = async (k, x) => { const d = await idb(); d.transaction("k", "readwrite").objectStore("k").put(x, k); };
+
+/* ---------- Google Drive storage (kahin se bhi) ---------- */
+const GOOGLE_CLIENT_ID = "586375021224-draist777buadaantan4fidc39jgvccp.apps.googleusercontent.com";
+const GSCOPE = "https://www.googleapis.com/auth/drive.file", CK = "csc_drive_cache", GAPI = "https://www.googleapis.com/drive/v3/files", GUP = "https://www.googleapis.com/upload/drive/v3/files";
+let GCID = localStorage.getItem("csc_gcid") || GOOGLE_CLIENT_ID || "";
+const drv = { on: false, tok: "", exp: 0, id: "", base: "", err: "", last: null, busy: false, again: false, dirty: false, tm: null };
+const isOnline = () => navigator.onLine !== false, sMsg = t => { const e = $("setupMsg"); if (e) e.textContent = t; };
+const authErr = m => Object.assign(new Error(m || "Google login chahiye"), { auth: true });
+function getToken(interactive){
+  return new Promise((ok, no) => {
+    if (!window.google || !google.accounts || !google.accounts.oauth2) return no(Object.assign(new Error("Google login script load nahi hua (internet check karein)."), { net: true }));
+    let done = false; const fin = (f, x) => { if (!done) { done = true; clearTimeout(tt); f(x); } }, tt = setTimeout(() => fin(no, authErr("Google se jawab nahi aaya")), interactive ? 120000 : 15000);
+    google.accounts.oauth2.initTokenClient({ client_id: GCID, scope: GSCOPE,
+      callback: r => { if (r.error) return fin(no, authErr(r.error_description || r.error)); drv.tok = r.access_token; drv.exp = Date.now() + (Number(r.expires_in || 3600) - 90) * 1000; fin(ok, drv.tok); },
+      error_callback: e => fin(no, authErr((e && e.type) || "Google login band ho gaya")) }).requestAccessToken({ prompt: interactive ? "" : "none" });
+  });
+}
+async function dapi(url, opt = {}, retry = true){
+  if (!drv.tok || Date.now() > drv.exp) { try { await getToken(false); } catch (e) { throw e.net ? e : authErr(); } }
+  let r; try { r = await fetch(url, { ...opt, headers: { ...(opt.headers || {}), Authorization: "Bearer " + drv.tok } }); } catch (e) { throw Object.assign(new Error("Internet nahi hai"), { net: true }); }
+  if (r.status === 401 && retry) { drv.tok = ""; return dapi(url, opt, false); }
+  if (!r.ok) throw Object.assign(new Error("Drive error " + r.status), { auth: r.status === 401, status: r.status });
+  return r;
+}
+const dq = q => encodeURIComponent(q);
+async function driveFind(name = FILE){ const j = await (await dapi(`${GAPI}?q=${dq("name='" + name + "' and trashed=false")}&fields=files(id,modifiedTime)&orderBy=modifiedTime%20desc&spaces=drive&pageSize=5`)).json(); return j.files && j.files[0] || null; }
+const driveRead = async id => (await dapi(`${GAPI}/${id}?alt=media`)).text();
+const driveMeta = async id => (await dapi(`${GAPI}/${id}?fields=id,modifiedTime,trashed`)).json();
+async function dmulti(name, json){
+  const bd = "csc" + Date.now(), body = `--${bd}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name, mimeType: "application/json" })}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${bd}--`;
+  return (await dapi(`${GUP}?uploadType=multipart&fields=id,modifiedTime`, { method: "POST", headers: { "Content-Type": "multipart/related; boundary=" + bd }, body })).json();
+}
+async function driveWrite(json){
+  if (drv.id) { try { return await (await dapi(`${GUP}/${drv.id}?uploadType=media&fields=id,modifiedTime`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: json })).json(); } catch (e) { if (e.status !== 404) throw e; drv.id = ""; } }
+  const w = await dmulti(FILE, json); drv.id = w.id; return w;
+}
+const cacheSave = dirty => { try { localStorage.setItem(CK, JSON.stringify({ id: drv.id, base: drv.base, dirty, t: Date.now(), d: D })); } catch (e) {} };
+const cacheLoad = () => { try { return JSON.parse(localStorage.getItem(CK)); } catch (e) { return null; } };
+function driveQueue(){ drv.dirty = true; cacheSave(true); clearTimeout(drv.tm); drv.tm = setTimeout(driveFlush, 1500); bkBadge(); }
+async function driveLoadRemote(){
+  const m = await driveMeta(drv.id); D = Object.assign(fresh(), JSON.parse(await driveRead(drv.id))); drv.base = m.modifiedTime; drv.dirty = false; drv.err = ""; cacheSave(false); normData(); r();
+}
+async function driveFlush(force){
+  if (force === true) drv.dirty = true;
+  if (!drv.on || !drv.dirty) return;
+  if (drv.busy) { drv.again = true; return; }
+  if (!isOnline()) { bkBadge(); return; }
+  drv.busy = true; bkBadge();
+  try {
+    if (drv.id) { let m; try { m = await driveMeta(drv.id); } catch (e) { if (e.status === 404) m = { gone: true }; else throw e; }
+      if (m.gone || m.trashed) { drv.id = ""; drv.base = ""; } else if (drv.base && m.modifiedTime !== drv.base && confirm("Drive ki data file kisi aur device se badli hai.\nOK = Drive ka naya data load karein (aapka abhi ka badlav hat jayega).\nCancel = abhi ka data Drive me likh dein.")) { await driveLoadRemote(); return; } }
+    const json = JSON.stringify(D), w = await driveWrite(json);
+    drv.base = w.modifiedTime; drv.dirty = false; drv.err = ""; drv.last = new Date(); cacheSave(false); driveDaily(json);
+  } catch (e) { drv.err = e.auth ? "auth" : e.net ? "net" : e.message; }
+  finally { drv.busy = false; bkBadge(); if (drv.again) { drv.again = false; if (drv.dirty) driveFlush(); } }
+}
+async function driveDaily(json){
+  const k = "csc_drive_bk"; if (localStorage.getItem(k) === today()) return;
+  try {
+    const nm = "CSC-Backup-" + today() + ".json", f = await driveFind(nm);
+    if (f) await dapi(`${GUP}/${f.id}?uploadType=media`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: json }); else await dmulti(nm, json);
+    localStorage.setItem(k, today());
+    const l = await (await dapi(`${GAPI}?q=${dq("name contains 'CSC-Backup-' and trashed=false")}&fields=files(id,name)&pageSize=200`)).json();
+    for (const x of l.files || []) { const mm = x.name.match(/^CSC-Backup-(\d{4}-\d\d-\d\d)\.json$/); if (mm && new Date(mm[1]).getTime() < Date.now() - 60 * 864e5) await dapi(`${GAPI}/${x.id}`, { method: "DELETE" }); }
+  } catch (e) {}
+}
+function setCid(){ const x = prompt("Google Client ID (xxxx.apps.googleusercontent.com):", GCID); if (x !== null) { GCID = x.trim(); localStorage.setItem("csc_gcid", GCID); r(); } }
+async function driveStart(){
+  const ci = $("cidIn"); if (ci && ci.value.trim() && ci.value.trim() !== GCID) { GCID = ci.value.trim(); localStorage.setItem("csc_gcid", GCID); }
+  if (!GCID) { if ($("cidBox")) { $("cidBox").style.display = "block"; sMsg("Pehle Google Client ID daalein (README me steps hain)."); } else setCid(); if (!GCID) return; }
+  const had = has(D) && !drv.on;
+  try {
+    sMsg("Google se jod rahe hain..."); await getToken(true);
+    const f = await driveFind(), cache = cacheLoad(); let dirty = false;
+    if (f) {
+      const remote = JSON.parse(await driveRead(f.id)); drv.id = f.id; drv.base = f.modifiedTime;
+      if (cache && cache.dirty && cache.id === f.id && has(cache.d)) {
+        if (cache.base === f.modifiedTime) { D = Object.assign(fresh(), cache.d); dirty = true; }
+        else if (confirm("Offline me kiye badlav aur Drive ka data dono alag hain.\nOK = Drive ka data lein (offline badlav ki ek backup file download ho jayegi).\nCancel = offline wala data Drive me likh dein.")) { dl("CSC-Offline-Badlav-" + today() + ".json", new Blob([JSON.stringify(cache.d)], { type: "application/json" })); D = Object.assign(fresh(), remote); }
+        else { D = Object.assign(fresh(), cache.d); dirty = true; }
+      } else if (had) {
+        if (confirm("Drive me pehle se data hai.\nOK = Drive ka data lein (abhi ka data hat jayega).\nCancel = abhi ka data Drive me likh dein.")) D = Object.assign(fresh(), remote); else dirty = true;
+      } else D = Object.assign(fresh(), remote);
+    } else {
+      const old = has(D) ? null : (cache && has(cache.d) ? cache.d : lsLoad());
+      if (has(old) && confirm("Drive me data file nahi mili. Is browser me pichhla saved data mila hai. OK = use Drive me wapas banayein.")) D = Object.assign(fresh(), old);
+      dirty = true;
+    }
+    drv.on = true; local = false; dir = null; drv.err = ""; drv.dirty = dirty; localStorage.setItem("csc_mode", "drive");
+    cacheSave(dirty); afterLoad(); if (dirty) driveFlush(); else drv.last = new Date(); bkBadge();
+  } catch (e) { sMsg("Google Drive chalu nahi hua: " + e.message); if (had) alert("Google Drive chalu nahi hua: " + e.message); }
+}
+function driveOffline(){
+  const c = cacheLoad(); if (!c || !has(c.d)) return;
+  D = Object.assign(fresh(), c.d); drv.on = true; local = false; dir = null; drv.id = c.id || ""; drv.base = c.base || ""; drv.dirty = !!c.dirty; drv.err = "auth"; afterLoad(); bkBadge();
+}
+async function driveReauth(){
+  try {
+    await getToken(true); drv.err = "";
+    if (!drv.id) { const f = await driveFind(); if (f) { drv.id = f.id; drv.dirty = true; } }
+    if (drv.dirty) driveFlush(); else if (drv.id) { const m = await driveMeta(drv.id); if (drv.base && m.modifiedTime !== drv.base) await driveLoadRemote(); }
+    bkBadge();
+  } catch (e) { drv.err = e.auth ? "auth" : e.net ? "net" : e.message; bkBadge(); alert("Google login nahi hua: " + e.message); }
+}
+async function driveLogout(){
+  if (drv.dirty) await driveFlush(); if (drv.dirty && !confirm("Kuch badlav Drive me save nahi hue. Phir bhi alag karein? (Badlav chale jayenge)")) return;
+  if (!confirm("Google se alag karein? Data Drive me surakshit rahega. Dobara kholne par phir se jodna padega.")) return;
+  try { if (drv.tok && window.google) google.accounts.oauth2.revoke(drv.tok, () => {}); } catch (e) {}
+  localStorage.removeItem(CK); localStorage.removeItem("csc_mode"); location.reload();
+}
+function bkText(){
+  if (drv.err === "auth") return ["off", "Google login chahiye. Yahan dabayein"];
+  if (drv.err === "net" || !isOnline()) return ["off", "Offline: internet aate hi Drive me save hoga"];
+  if (drv.err) return ["off", "Drive me save nahi hua! " + drv.err];
+  if (drv.busy || drv.dirty) return ["on", "☁ Drive: save ho raha hai..."];
+  return ["on", "☁ Google Drive" + (drv.last ? " (saved " + drv.last.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) + ")" : "")];
+}
+function bkClick(){ if (drv.on && drv.err === "auth") driveReauth(); else go("bk"); }
+let instEv = null; const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); instEv = e; const b = $("instBtn"); if (b) b.style.display = "inline-block"; });
+async function doInstall(){ if (!instEv) return; instEv.prompt(); try { await instEv.userChoice; } catch (e) {} instEv = null; r(); }
+window.addEventListener("online", () => { if (drv.on) { if (drv.err === "net") drv.err = ""; driveFlush(); bkBadge(); } });
+window.addEventListener("offline", bkBadge);
+document.addEventListener("visibilitychange", () => { if (document.hidden && drv.on && drv.dirty) driveFlush(); });
+window.addEventListener("beforeunload", e => { if (drv.on && drv.dirty) { e.preventDefault(); e.returnValue = ""; } });
+setInterval(() => { if (drv.on && drv.tok && drv.exp - Date.now() < 5 * 6e4 && !drv.err) getToken(false).catch(() => {}); }, 6e4);
+if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+function save(){
+  if (drv.on) return driveQueue();
+  if (local) { try { localStorage.setItem(KEY, JSON.stringify(D)); } catch (e) { alert("Browser storage full hai."); } return; }
+  if (dir) busy = busy.then(writeAll);
+}
+async function writeAll(){
+  pending++; bkBadge();
+  try {
+    const json = JSON.stringify(D, null, 1);
+    const fh = await dir.getFileHandle(FILE, { create: true });
+    const cur = await fh.getFile();
+    if (lastMod && cur.size > 0 && cur.lastModified !== lastMod) {
+      if (confirm("Folder ki data file kisi aur ne badal di hai (doosra tab ya doosra computer). OK = folder ka naya data load karein (aapka abhi ka badlav hat jayega). Cancel = abhi ka data folder mein likh dein.")) {
+        D = Object.assign(fresh(), JSON.parse(await cur.text())); lastMod = cur.lastModified; st.err = ""; r(); return;
+      }
+    }
+    const w = await fh.createWritable(); await w.write(json); await w.close();
+    lastMod = (await fh.getFile()).lastModified;
+    const bd = await dir.getDirectoryHandle("Backups", { create: true });
+    const bf = await bd.getFileHandle("CSC-Backup-" + today() + ".json", { create: true });
+    const w2 = await bf.createWritable(); await w2.write(json); await w2.close();
+    st.last = new Date(); st.err = "";
+  } catch (e) {
+    if (!st.err) alert("Data folder mein save NAHI hua: " + e.message + "\nBackup and Excel page par folder dobara chunein.");
+    st.err = e.message;
+  } finally { pending--; bkBadge(); }
+}
+async function loadDir(){
+  let f = null;
+  try { f = await (await dir.getFileHandle(FILE)).getFile(); } catch (e) {}
+  if (f) {
+    let x; try { x = JSON.parse(await f.text()); } catch (e) { throw new Error("Folder ki data file kharab hai. Backups folder se purani file use karein."); }
+    D = Object.assign(fresh(), x); lastMod = f.lastModified;
+  } else {
+    const old = lsLoad();
+    if (!has(D) && has(old)) { D = Object.assign(fresh(), old); alert("Browser ka purana data is folder mein copy kar diya gaya."); }
+    lastMod = 0; await writeAll();
+  }
+  cleanOld();
+}
+async function cleanOld(){
+  try { const bd = await dir.getDirectoryHandle("Backups"), lim = Date.now() - 60 * 864e5;
+    for await (const [n] of bd.entries()) { const mm = n.match(/^CSC-Backup-(\d{4}-\d\d-\d\d)\.json$/); if (mm && new Date(mm[1]).getTime() < lim) await bd.removeEntry(n); } } catch (e) {}
+}
+async function pickDir(){
+  const prev = dir;
+  try {
+    let d = pendDir;
+    if (d && (await d.requestPermission({ mode: "readwrite" })) !== "granted") d = null;
+    if (!d) d = await showDirectoryPicker({ id: "csc-data", mode: "readwrite" });
+    dir = d; pendDir = null; local = false; drv.on = false; localStorage.setItem("csc_mode", "folder"); await idbSet("dir", d); await loadDir();
+    afterLoad();
+  } catch (e) {
+    dir = prev;
+    if (e.name !== "AbortError") { $("setupMsg").textContent = "Folder chalu nahi hua: " + e.message; if (prev) alert("Folder chalu nahi hua: " + e.message); }
+  }
+}
+function changeDir(){ pendDir = null; pickDir(); }
+function useLocal(){ local = true; drv.on = false; localStorage.setItem("csc_mode", "local"); D = Object.assign(fresh(), lsLoad() || {}); afterLoad(); }
+async function boot(){
+  r();
+  const mode = localStorage.getItem("csc_mode"), c = cacheLoad();
+  if (!GCID) $("cidBox").style.display = "block";
+  if (mode === "drive") { $("driveBtn").textContent = "☁ Google Drive se jodein (pichhla account)"; if (c && has(c.d)) $("offBtn").style.display = "block"; if (!isOnline()) sMsg("Internet nahi hai. Neeche wale button se pichhla saved data khol sakte hain."); return; }
+  if (!window.showDirectoryPicker || !window.indexedDB) { sMsg("Is browser me folder me save nahi hota (phone). Google Drive wala option use karein."); $("setupBtn").style.display = "none"; return; }
+  try {
+    const d = await idbGet("dir");
+    if (d) { pendDir = d; $("setupBtn").textContent = "Folder allow karein: " + d.name; if ((await d.queryPermission({ mode: "readwrite" })) === "granted") await pickDir(); }
+  } catch (e) {}
+}
+function bkBadge(){
+  const e = $("bk"); if (!e) return;
+  if (drv.on) { const [c, t] = bkText(); e.className = c; e.textContent = t; }
+  else if (local) { e.className = "off"; e.textContent = "Sirf browser mein. Surakshit nahi"; }
+  else if (!dir) { e.className = "off"; e.textContent = "Data folder juda nahi hai"; }
+  else if (st.err) { e.className = "off"; e.textContent = "Folder mein save nahi hua! Click karein"; }
+  else { e.className = "on"; e.textContent = "Folder: " + dir.name + (pending ? " (saving...)" : st.last ? " (saved " + st.last.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) + ")" : ""); }
+}
+function dl(name, blob){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+const dlJson = () => dl("CSC-Hisaab-Backup-" + today() + ".json", new Blob([JSON.stringify(D, null, 1)], { type: "application/json" }));
+const xmlShim = {
+  utils: { book_new: () => ({ sheets: [] }), json_to_sheet: a => a, book_append_sheet: (wb, ws, n) => wb.sheets.push([n, ws]) },
+  writeFile: (wb, name) => {
+    const esc = x => String(x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const sheet = ([n, rows]) => { const cols = [...new Set(rows.flatMap(z => Object.keys(z)))]; return `<Worksheet ss:Name="${esc(n.replace(/[\\/?*\[\]:]/g, "-").slice(0, 31))}"><Table>` + (cols.length ? `<Row>${cols.map(c => `<Cell><Data ss:Type="String">${esc(c)}</Data></Cell>`).join("")}</Row>` : "") + rows.filter(z => Object.keys(z).length).map(z => `<Row>${cols.map(c => { const x = z[c]; return x === undefined || x === "" ? "<Cell/>" : typeof x === "number" ? `<Cell><Data ss:Type="Number">${x}</Data></Cell>` : `<Cell><Data ss:Type="String">${esc(x)}</Data></Cell>`; }).join("")}</Row>`).join("") + `</Table></Worksheet>`; };
+    dl(name.replace(/\.xlsx$/, ".xml"), new Blob([`<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${wb.sheets.map(sheet).join("")}</Workbook>`], { type: "application/xml" }));
+    alert("Internet nahi hai, isliye .xlsx ki jagah .xml file bani hai. Isey seedha Excel mein kholein.");
+  }
+};
+window.addEventListener("load", () => { if (typeof QRCode === "undefined" || typeof XLSX === "undefined") setTimeout(() => toast("Internet nahi hai: QR aur .xlsx abhi nahi chalenge. Excel ka XML option chalega.", "OK", "document.getElementById('toast').style.display='none'"), 1500); });
+function restore(inp){
+  const f = inp.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { try { const x = JSON.parse(rd.result); if (!Array.isArray(x.sales)) throw 0; if (!confirm("Maujooda data hat kar backup ka data load hoga. Pakka?\n\n(Restore se pehle abhi ka data apne aap ek backup file me download ho jayega.)")) return; dlJson(); const sec = D.sec; D = Object.assign(fresh(), x); if (!x.sec && sec) D.sec = sec; normData(); save(); r(); alert("Data restore ho gaya."); } catch (e) { alert("Ye sahi backup file nahi hai."); } };
+  rd.readAsText(f);
+}
+window.addEventListener("beforeunload", e => { if (pending) { e.preventDefault(); e.returnValue = ""; } });
+
+/* ---------- calculations ---------- */
+const cn = id => (D.customers.find(c => c.id === id) || {}).name || "Walk-in";
+const pn = id => (D.parties.find(p => p.id === id) || {}).name || "";
+const WALK = { id: "W", name: "Walk-in (bina naam)", phone: "", addr: "" };
+const cm = id => id === "W" ? "" : id;
+const cbal0 = id => D.sales.filter(s => s.cid === cm(id)).reduce((a, s) => a + s.amt - s.rec, 0) - D.payments.filter(p => p.cid === cm(id)).reduce((a, p) => a + p.amt, 0);
+const cbal = id => r2(cbal0(id));
+const pbal0 = id => D.ptx.filter(t => t.pid === id).reduce((a, t) => a + (t.kind === "due" ? t.amt : -t.amt), 0);
+const pbal = id => r2(pbal0(id));
+function months(fy){
+  const o = {}, add = (d, k, a) => { if (fy != null && fyOf(d) !== fy) return; const mk = d.slice(0, 7); const z = (o[mk] = o[mk] || { i: 0, e: 0, u: 0 }); z[k] = r2(z[k] + a); };
+  D.sales.forEach(s => { add(s.d, "i", incSale(s)); add(s.d, "u", Math.max(0, s.amt - s.rec)); }); payInc().forEach(p => add(p.d, "i", p.a));
+  D.expenses.forEach(e => add(e.d, "e", e.amt - (e.itc || 0))); D.ptx.filter(t => t.kind === "paid").forEach(t => add(t.d, "e", t.amt));
+  return o;
+}
+const mlabel = k => new Date(k + "-01").toLocaleString("en-IN", { month: "long", year: "numeric" });
+const allExp = () => [...D.expenses.map(e => ({ id: e.id, c: "expenses", d: e.d, cat: e.cat, amt: e.amt, note: e.note, mode: e.mode || "Cash" })),
+  ...D.ptx.filter(t => t.kind === "paid").map(t => ({ d: t.d, cat: "Lender: " + pn(t.pid), amt: t.amt, note: t.note, mode: t.mode || "Cash" }))].sort((a, b) => (b.d.localeCompare(a.d) || (b.id || "").localeCompare(a.id || "")));
+
+/* ---------- helpers ---------- */
+const F = (l, i) => `<label>${l}${i}</label>`;
+const tdc = x => /^\d\d-\d\d-\d{4}$/.test(x) ? ' class="nw"' : "";
+const R = (...c) => `<tr>${c.map(x => `<td${tdc(x)}>${x}</td>`).join("")}</tr>`;
+const RC = (cl, ...c) => `<tr class="${cl}">${c.map(x => `<td${tdc(x)}>${x}</td>`).join("")}</tr>`;
+const T = (hd, rows) => `<div class="w"><table><tr>${hd.map(x => `<th>${x}</th>`).join("")}</tr>${rows.join("") || `<tr><td colspan="${hd.length}" class="e">Abhi koi entry nahi</td></tr>`}</table></div>`;
+const X = (c, id) => id ? `<button class="x" style="color:var(--p)" title="Edit" onclick="edit('${c}','${id}')">✎</button> <button class="x" title="Delete" onclick="del('${c}','${id}')">✕</button>` : "";
+function del(c, id){
+  if (c === "sales") { const it = D.sales.find(x => x.id === id); if (it && it.invId) return alert("Ye entry Receipt/Invoice se bani hai. Receipt / Invoice page par us invoice ko Cancel karein."); }
+  if (c === "customers" && (D.sales.some(s => s.cid === id) || D.payments.some(p => p.cid === id) || D.jobs.some(j => j.cid === id) || D.inv.some(i => i.cid === id))) return alert("Is customer ki entries (sales, receipt ya Work Tracker) hain. Pehle unhe hatayein, ya Merge karein.");
+  if (c === "parties" && D.ptx.some(t => t.pid === id)) return alert("Is lender ki entries hain. Pehle unhe delete karein.");
+  const item = D[c].find(x => x.id === id), idx = D[c].indexOf(item);
+  const ex = c === "sales" && item && !D.sales.some(x => x.id !== id && item.vid && x.vid === item.vid) ? advOf(item) : [];
+  if (!confirm("Ye entry delete karein?" + (ex.length ? "\n\nIs entry ke saath mila extra / advance payment (" + m(r2(ex.reduce((a, p) => a + p.amt, 0))) + ") bhi delete hoga." : ""))) return;
+  if (c === "ptx" && item && item.auto && item.mk) { const pp = D.parties.find(x => x.id === item.pid); if (pp) pp.autoSkip = [...(pp.autoSkip || []), item.mk]; }
+  D[c] = D[c].filter(x => x.id !== id); if (ex.length) D.payments = D.payments.filter(p => !ex.includes(p)); save(); r();
+  lastDel = { c, item, idx, ex }; toast("Entry delete ho gayi.", "Undo", "undoDel()");
+}
+const ADV = "Advance (sale ke saath extra mila)";
+function advOf(s){
+  const ps = s.vid ? D.payments.filter(p => p.vid === s.vid) : [];
+  if (ps.length) return ps;
+  const bills = new Set(D.sales.filter(x => x.d === s.d && x.cid === s.cid).map(x => x.vid || x.id));
+  return s.cid && bills.size === 1 ? D.payments.filter(p => !p.vid && p.d === s.d && p.cid === s.cid && (p.rmk || "").indexOf(ADV) === 0) : [];
+}
+const firstLine = o => !o.vid || D.sales.filter(x => x.vid === o.vid).sort((a, b) => a.id.localeCompare(b.id))[0] === o;
+const advAmt = o => firstLine(o) ? r2(advOf(o).reduce((a, p) => a + p.amt, 0)) : 0;
+function syncAdv(o, adv, ex){
+  if (ex > 0 && o.cid) {
+    const p = adv[0];
+    if (p) { p.amt = ex; p.d = o.d; p.cid = o.cid; p.mode = o.mode; if (o.vid) p.vid = o.vid; D.payments = D.payments.filter(z => !adv.slice(1).includes(z)); }
+    else D.payments.push({ id: uid(), d: o.d, cid: o.cid, amt: ex, mode: o.mode, vid: o.vid, rmk: ADV });
+  } else D.payments = D.payments.filter(z => !adv.includes(z));
+}
+let lastDel = null, toastT;
+function toast(msg, lbl, fn){ const t = $("toast"); t.innerHTML = h(msg) + `<button onclick="${fn}">${lbl}</button>`; t.style.display = "block"; clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = "none"; }, 10000); }
+function undoDel(){ const d = lastDel; if (!d) return; D[d.c].splice(Math.min(d.idx, D[d.c].length), 0, d.item); if (d.ex && d.ex.length) D.payments.push(...d.ex); lastDel = null; $("toast").style.display = "none"; save(); r(); }
+function need(c, msg){ if (!c) { alert(msg); return true; } }
+
+/* ---------- views ---------- */
+function vDash(){
+  const fy = FY === "all" ? null : FY, o = months(fy), all = months(), mk = today().slice(0, 7), label = fy === null ? "Sabhi saal" : "F-Y " + fyLbl(fy);
+  let ks = Object.keys(o);
+  if (fy !== null) { ks = []; for (let i = 0; i < 12; i++) { const mm = (3 + i) % 12 + 1; ks.push((fy + (mm >= 4 ? 0 : 1)) + "-" + String(mm).padStart(2, "0")); } }
+  ks = ks.filter(k => o[k] || k <= mk);
+  ks.sort().reverse();
+  const g = k => o[k] || { i: 0, e: 0, u: 0 };
+  const TU = r2(ks.reduce((a, k) => a + g(k).u, 0)), TI = r2(ks.reduce((a, k) => a + g(k).i, 0)), TE = r2(ks.reduce((a, k) => a + g(k).e, 0)), mx = Math.max(1, ...ks.map(k => Math.max(g(k).i, g(k).e)));
+  const c = all[mk] || { i: 0, e: 0, u: 0 }, ts = D.sales.filter(s => s.d === today()), tBill = r2(ts.reduce((a, s) => a + s.amt, 0)), tUdh = r2(ts.reduce((a, s) => a + Math.max(0, s.amt - s.rec), 0)), ti = D.sales.filter(s => s.d === today()).reduce((a, s) => a + incSale(s), 0) + payInc().filter(p => p.d === today()).reduce((a, p) => a + p.a, 0), sf = stuckFees(true);
+  const due = r2([WALK, ...D.customers].reduce((a, x) => a + Math.max(0, cbal(x.id)), 0)), pay = r2(D.parties.reduce((a, x) => a + Math.max(0, pbal(x.id)), 0)), av = r2(D.assets.reduce((a, x) => a + x.cost * x.qty, 0));
+  const pm0 = pendMap(), oldest = {}; D.sales.forEach(s => { if ((pm0[s.id] || 0) > 0 && (!oldest[s.cid] || s.d < oldest[s.cid])) oldest[s.cid] = s.d; });
+  const ageTxt = id => { const d0 = oldest[cm(id)]; if (!d0) return "-"; const n = Math.max(0, Math.round((new Date(today()) - new Date(d0)) / 864e5)); return n >= 30 ? `<b class="r">${n} din ⚠</b>` : n + " din"; };
+  const pend = [WALK, ...D.customers].map(x => ({ x, b: cbal(x.id) })).filter(y => y.b > 0).sort((a, b) => b.b - a.b).map(y => R(`<button class="lk" onclick="openLedger('${y.x.id}')">${h(y.x.name)}</button>`, h(y.x.phone), `<b class="r">${m(y.b)}</b>`, ageTxt(y.x.id), waNum(y.x.phone) ? `<button class="g2" title="WhatsApp par payment QR bhejein" onclick="openLedger('${y.x.id}');waRemind()">💬 QR</button>` : ""));
+  const udhR = ts.filter(s => s.amt > s.rec).map(s => R(`<button class="lk" onclick="openLedger('${s.cid || "W"}')">${h(cn(s.cid))}</button>`, h(s.svc), h(s.rmk || ""), m(s.amt), m(s.rec), `<b class="r">${m(r2(s.amt - s.rec))}</b>`));
+  if (tUdh > 0) udhR.push(RC("tt", "Aaj ka kul udhaar", "", "", "", "", `<b class="r">${m(tUdh)}</b>`));
+  const inc = {}, exc = {};
+  D.sales.filter(s => inFY(s.d)).forEach(s => { const k = s.svc.trim().toLowerCase(), z = inc[k] = inc[k] || { n: s.svc.trim(), c: 0, b: 0, g: 0 }; z.c++; z.b = r2(z.b + (sFee(s) > 0 ? sSvc(s) : s.amt) * nfS(s)); z.g = r2(z.g + incSale(s)); });
+  const addE = (name, a) => { const k = name.trim().toLowerCase(), z = exc[k] = exc[k] || { n: name.trim(), a: 0 }; z.a = r2(z.a + a); };
+  D.expenses.filter(e => inFY(e.d)).forEach(e => addE(e.cat, e.amt - (e.itc || 0)));
+  D.ptx.filter(t => t.kind === "paid" && inFY(t.d)).forEach(t => addE((D.parties.find(p => p.id === t.pid) || {}).type || "Other", t.amt));
+  const incR = Object.values(inc).sort((a, b) => b.g - a.g), pys = payInc().filter(p => inFY(p.d)), pc = r2(pys.reduce((a, p) => a + p.a, 0));
+  if (pc) incR.push({ n: "Udhar vasooli (customer payments)", c: pys.length, b: pc, g: pc });
+  const excR = Object.values(exc).sort((a, b) => b.a - a.a);
+  const pct = (a, t) => t > 0 ? (a / t * 100).toFixed(1) + "%" : "-";
+  const bar = (a, t, col) => `<div class="bar"><i style="width:${t > 0 ? a / t * 100 : 0}%;background:var(--${col})"></i></div>`;
+  const fys = fyList().map(a => { const q = Object.values(months(a)); return { a, i: q.reduce((x, y) => x + y.i, 0), e: q.reduce((x, y) => x + y.e, 0) }; });
+  const tm = md => D.sales.filter(s => s.d === today() && s.mode === md).reduce((a, s) => a + s.rec, 0) + D.payments.filter(p => p.d === today() && p.mode === md).reduce((a, p) => a + p.amt, 0);
+  const G = (l, v_, t, ic, g) => ({ l, v: v_, t, ic, g });
+  const cards = [
+    G("Income (" + label + ")", m(TI), "g", "📈", "f"), G("Kharcha (" + label + ")", m(TE), "r", "📉", "f"), G("Net profit", m(TI - TE), TI >= TE ? "g" : "r", "💰", "f"),
+    ...(sf > 0 ? [G("Fees fasi hui (loss agar na mile)", m(sf), "r", "⏳", "f"), G("Net profit (fasi fees ghata kar)", m(r2(TI - TE - sf)), TI - TE - sf >= 0 ? "g" : "r", "⚖️", "f")] : []),
+    G("Profit margin", TI > 0 ? ((TI - TE) / TI * 100).toFixed(1) + "%" : "-", "", "📊", "f"),
+    G("Aaj ki bikri (kul bill)", m(tBill), "", "🛒", "a"), G("Aaj ki income", m(ti), "", "📥", "a"), G("Aaj ka udhaar (baaki)", m(tUdh), tUdh > 0 ? "r" : "g", "📒", "a"), G("Aaj Cash (hath mein)", m(tm("Cash")), "", "💵", "a"), G("Aaj UPI", m(tm("UPI")), "", "📱", "a"),
+    G("Is mahine ki income", m(c.i), "", "📅", "m"), G("Is mahine ka udhaar (diya)", m(c.u), c.u > 0 ? "r" : "g", "📌", "m"), G("Is mahine ka kharcha", m(c.e), "", "💸", "m"),
+    G("Customers se lena hai", m(due), "", "👥", "b"), ...(D.gst.on ? [G("GST baaki (bharna hai)", m(gstDue()), gstDue() > 0 ? "r" : "g", "🧾", "b")] : []), G("Lenders ko dena hai", m(pay), "", "🏦", "b"), G("Total assets", m(av), "", "🏢", "b"),
+    ...(D.jobs.length ? [G("Baaki kaam (Work Tracker)", String(D.jobs.filter(j => j.st !== "Delivered").length), D.jobs.some(j => j.st !== "Delivered") ? "r" : "g", "📋", "b")] : [])];
+  const grp = { f: label + " ka hisaab", a: "Aaj ka din", m: "Is mahine", b: "Lena-dena aur baaki kaam" };
+
+  return `<h2>Dashboard <span style="font-size:15px;color:var(--m);font-weight:600">${label}</span></h2>${local ? `<div class="box" style="border-color:var(--r)"><b class="r">Data folder juda nahi hai.</b> Data sirf browser mein hai. Chrome ya Edge mein kholkar folder chunein.</div>` : ""}
+  ${["f", "a", "m", "b"].map(g => `<div class="dg">${grp[g]}</div><div class="cards dcs">${cards.filter(x => x.g === g).map(x => `<div class="dc"><div class="ic ${x.t}">${x.ic}</div><div><small>${x.l}</small><b class="${x.t}">${x.v}</b></div></div>`).join("")}</div>`).join("")}
+  <div class="box" id="gbox"></div>
+  <div class="tb"><button class="g2" onclick="uiAll(true)">Sab kholein</button><button class="g2" onclick="uiAll(false)">Sab band karein</button><input type="date" id="drd" value="${today()}" style="margin-left:auto"><button class="g2" onclick="printDay()">🖨 Din ka report</button></div>
+  <details class="box dsec" ${uiOp("u", true)} ontoggle="uiSec('u',this.open)"><summary>Aaj ka udhaar (jo paisa abhi nahi mila)</summary>${tUdh > 0 ? T(["Customer", "Service", "Remark", "Bill", "Mila", "Udhaar"], udhR) : '<p class="m">Aaj koi udhaar nahi. Saara paisa mil gaya.</p>'}</details>
+  <details class="box dsec" ${uiOp("m")} ontoggle="uiSec('m',this.open)"><summary>Month-wise (${label})</summary><p class="m"><b class="g">■ Income</b> &nbsp; <b class="r">■ Expense</b> &nbsp; <b style="color:var(--p)">■ Profit</b> &nbsp; <b style="color:var(--o)">■ Loss</b></p>${T(["Month", "Income (mila)", "Expense", "Profit", "Udhaar diya", "Graph"], ks.map(k => R(mlabel(k), `<span class="g">${m(g(k).i)}</span>`, `<span class="r">${m(g(k).e)}</span>`, `<b class="${g(k).i >= g(k).e ? "g" : "r"}">${m(g(k).i - g(k).e)}</b>`, g(k).u ? `<span class="r">${m(g(k).u)}</span>` : "-", bar(g(k).i, mx, "g") + bar(g(k).e, mx, "r") + bar(Math.abs(g(k).i - g(k).e), mx, g(k).i >= g(k).e ? "p" : "o"))).concat(RC("tt", "Total", `<span class="g">${m(TI)}</span>`, `<span class="r">${m(TE)}</span>`, `<b class="${TI >= TE ? "g" : "r"}">${m(TI - TE)}</b>`, `<span class="r">${m(TU)}</span>`, ""))
+  )}</details>
+  <details class="box dsec" ${uiOp("s")} ontoggle="uiSec('s',this.open)"><summary>Income service-wise (${label})</summary>${T(["Service", "Entries", "Kul amount", "Mila", "Baaki", "Share", "Graph"], incR.map(x => R(h(x.n), x.c, m(x.b), m(x.g), x.b - x.g ? `<span class="r">${m(x.b - x.g)}</span>` : "-", pct(x.g, TI), bar(x.g, TI, "g"))))}</details>
+  <details class="box dsec" ${uiOp("e")} ontoggle="uiSec('e',this.open)"><summary>Kharcha category-wise (${label})</summary>${T(["Category", "Amount", "Share", "Graph"], excR.map(x => R(h(x.n), m(x.a), pct(x.a, TE), bar(x.a, TE, "r"))))}</details>
+  <details class="box dsec" ${uiOp("f")} ontoggle="uiSec('f',this.open)"><summary>Saal-dar-saal (F-Y comparison)</summary>${T(["F-Y", "Income", "Expense", "Profit", "Margin", ""], fys.map(f => R(`<button class="lk" onclick="setFY(${f.a})">F-Y ${fyLbl(f.a)}</button>`, `<span class="g">${m(f.i)}</span>`, `<span class="r">${m(f.e)}</span>`, `<b class="${f.i >= f.e ? "g" : "r"}">${m(f.i - f.e)}</b>`, f.i > 0 ? ((f.i - f.e) / f.i * 100).toFixed(1) + "%" : "-", f.a === FY ? "◀ chuna hua" : "")))}</details>
+  <details class="box dsec" ${uiOp("p")} ontoggle="uiSec('p',this.open)"><summary>Customers se lena hai (pending)</summary>${T(["Customer", "Phone", "Lena hai", "Sabse purana baaki", ""], pend)}</details>`;
+}
+const uiOp = (k, def) => { const x = D.ui && D.ui.sec ? D.ui.sec[k] : undefined; return (x === undefined ? !!def : x) ? "open" : ""; };
+function uiSec(k, open){ D.ui = D.ui || { sec: {} }; D.ui.sec = D.ui.sec || {}; if (D.ui.sec[k] === open) return; D.ui.sec[k] = open; save(); }
+const BKS = ["bd", "b1", "b2", "b3", "b4", "b5", "b6", "b7"];
+function uiAll(on, ks){ D.ui = D.ui || { sec: {} }; D.ui.sec = D.ui.sec || {}; (ks || ["u", "m", "s", "e", "f", "p"]).forEach(k => D.ui.sec[k] = on); save(); r(); }
+function freshDay(){ const t = today(); if (t !== LD0) { LD0 = t; lastD = t; } }
+function vSales(){
+  freshDay();
+  return `<h2>Daily sales</h2><datalist id="sl">${D.svc.map(s => `<option>${h(s)}</option>`).join("")}</datalist>
+  <div class="box">${quickBar("s")}<div class="row">${F("Date", `<input type="date" id="sd" value="${lastD}">`)}${cbHtml("sc", "Customer (naam likhein ya chunein)")}</div>
+  <div id="slines" style="margin:12px 0"></div>
+  <div class="row">${F("Total (auto)", `<input id="stot" readonly style="width:120px;font-weight:700">`)}${F("Received", `<input type="text" inputmode="decimal" class="amt" id="sr" style="width:120px" oninput="srAuto=false">`)}${F("Mode", `<select id="sm"><option>Cash</option><option>UPI</option></select>`)}${F("General remark (naam, mobile)", `<input id="sk" placeholder="Udhar wale ka naam, mobile" style="width:240px">`)}<button class="b" onclick="addSale()">Add sale</button></div></div>
+  <div class="box"><div class="row">${F("Search (name, service, amount, date)", `<input id="q" oninput="sTbl()" style="width:270px">`)}${F("From", `<input type="date" id="f" onchange="sTbl()">`)}${F("To", `<input type="date" id="t" onchange="sTbl()">`)}<button class="g2" onclick="qd(0)">Aaj</button><button class="g2" onclick="qd(1)">Kal</button><button class="g2" onclick="qd('m')">Is mahine</button><button class="g2" onclick="clrF()">Clear all filters</button></div><div id="sinfo"></div><div class="w"><table class="st">${salesHead()}<tbody id="sbody"></tbody></table></div></div>`;
+}
+let SL = [{ svc: "", rmk: "", amt: "", fee: "" }], srAuto = true;
+function slReset(){ SL = [{ svc: "", rmk: "", amt: "", fee: "" }]; srAuto = true; }
+function slRender(){
+  $("slines").innerHTML = `<div class="w"><table><tr><th>Service</th><th>Remark / Description</th><th>Total Lena (customer se)</th><th>Fees / Govt. Fees / Other (customer ka kharcha)</th><th>Service Charge (meri income, auto)</th><th></th></tr>${SL.map((l, i) => `<tr><td><input${i === 0 ? ' id="ss"' : ""} list="sl" value="${h(l.svc)}" placeholder="Aadhaar, PAN..." style="width:210px" oninput="SL[${i}].svc=this.value"></td><td><input value="${h(l.rmk)}" style="width:100%;min-width:220px" oninput="SL[${i}].rmk=this.value"></td><td><input type="text" inputmode="decimal" class="amt" value="${h(l.amt)}" style="width:130px" oninput="SL[${i}].amt=this.value;slTot()"></td><td><input type="text" inputmode="decimal" class="amt" value="${h(l.fee || "")}" style="width:150px" oninput="SL[${i}].fee=this.value;slTot()"></td><td class="nw"><b id="slt${i}" style="color:${N(l.fee) > N(l.amt) ? "#c0392b" : "inherit"}">${m(Math.max(0, r2(N(l.amt) - N(l.fee))))}</b></td><td>${SL.length > 1 ? `<button class="x" onclick="SL.splice(${i},1);slRender()">✕</button>` : ""}</td></tr>`).join("")}</table></div><button class="g2" style="margin-top:8px" onclick="SL.push({svc:'',rmk:'',amt:'',fee:''});slRender()">+ Line jodein</button>`;
+  slTot();
+}
+function slTot(){ SL.forEach((l, i) => { const e = $("slt" + i); if (e) { const sv = r2(N(l.amt) - N(l.fee)); e.textContent = m(Math.max(0, sv)); e.style.color = sv < 0 ? "#c0392b" : "inherit"; } }); const t = r2(SL.reduce((a, l) => a + N(l.amt), 0)); $("stot").value = t ? String(t) : ""; if (srAuto) $("sr").value = t ? String(t) : ""; }
+function udharAsk(gen){
+  const ph = ((gen || "").match(/\d[\d\s-]{8,}\d/) || [""])[0].replace(/\D/g, ""), nm = (gen || "").replace(/[\d\s+-]{7,}/g, "").replace(/[,|]+\s*$/, "").trim();
+  $("md").innerHTML = `<div class="mb"><h3>Udhaar wali entry: customer ka naam?</h3><p class="m">Walk-in me sab udhaar ek hi ledger me mil jate hain. Naam dene par is customer ka alag ledger banega.</p>${F("Purana customer chunein", `<select id="uc"><option value="">- naya customer -</option>${D.customers.map(x => `<option value="${x.id}">${h(x.name)}</option>`).join("")}</select>`)}${F("Ya naya naam", `<input id="un" type="text" value="${h(nm)}">`)}${F("Mobile (optional)", `<input id="up" type="text" inputmode="numeric" value="${h(ph)}">`)}<div class="row" style="margin-top:8px"><button class="b" onclick="udharSave()">Customer ke naam se save</button><button class="g2" onclick="closeEd();addSale({wk:true})">Walk-in me hi save</button><button class="g2" onclick="closeEd()">Cancel</button></div></div>`;
+  $("md").style.display = "flex";
+}
+function udharSave(){
+  let cid = v("uc");
+  if (!cid) {
+    const n = v("un").trim(); if (!n) return alert("Customer ka naam bharein ya purana customer chunein.");
+    const ex = D.customers.find(x => norm(x.name) === norm(n));
+    if (ex) cid = ex.id;
+    else { const c = { id: uid(), name: n, phone: v("up").trim(), addr: "" }; D.customers.push(c); cid = c.id; }
+  }
+  closeEd(); addSale({ cid });
+}
+function addSale(o){
+  o = o || {};
+  const ls = SL.map(l => ({ svc: l.svc.trim(), rmk: l.rmk.trim(), fee: Math.max(0, N(l.fee)), amt: N(l.amt) })).filter(l => l.amt || l.svc);
+  if (need(ls.length && ls.every(l => l.svc && l.amt > 0), "Har line mein service aur Total Lena bharein.")) return;
+  if (need(ls.every(l => l.fee <= l.amt), "Fees, Total Lena se zyada nahi ho sakti.")) return;
+  const d = v("sd") || today(), cid = o.cid || v("sc"), total = r2(ls.reduce((a, l) => a + l.amt, 0)), recIn = v("sr") === "" ? total : N(v("sr")), rec0 = Math.max(0, Math.min(recIn, total)), gen = v("sk").trim(), mode = v("sm");
+  if (rec0 < total && !cid && !o.wk) return udharAsk(gen);
+  if (cid && ls.some(l => D.sales.some(s => s.d === d && s.cid === cid && s.amt === l.amt && s.svc.toLowerCase() === l.svc.toLowerCase())) && !confirm("Is customer ki usi din, usi service aur usi amount ki entry pehle se hai. Dobara jodein?")) return;
+  const vid = uid();
+  if (recIn > total) {
+    const ex = r2(recIn - total);
+    if (cid) { if (!confirm("Received (" + m(recIn) + ") bill (" + m(total) + ") se " + m(ex) + " zyada hai.\n\nOK = extra " + m(ex) + " customer ke ADVANCE payment ke roop me jod dein.\nCancel = ruk jayein, amount theek karein.")) return; D.payments.push({ id: uid(), d, cid, amt: ex, mode, vid, rmk: ADV }); }
+    else if (!confirm("Received (" + m(recIn) + ") bill (" + m(total) + ") se zyada hai. Walk-in me extra paisa save nahi hoga, sirf " + m(total) + " judega. Aage badhein?")) return;
+  }
+  let left = rec0;
+  ls.forEach((l, k) => { const part = Math.min(left, l.amt); left = r2(left - part); D.sales.push({ id: vid + String(k).padStart(2, "0"), d, svc: l.svc, rmk: [l.rmk, gen].filter(Boolean).join(" | "), amt: l.amt, fee: l.fee, rec: part, cid, mode, vid }); if (!D.svc.includes(l.svc)) D.svc.push(l.svc); });
+  lastD = d; if (FY !== "all" && fyOf(lastD) !== FY) FY = fyOf(lastD);
+  slReset(); save(); r(); $("ss").focus();
+}
+function qdR(a, b, fn, x){ const n = new Date(); let st = isoD(n), en = st; if (x === 1) { n.setDate(n.getDate() - 1); st = en = isoD(n); } if (x === "m") st = st.slice(0, 8) + "01"; $(a).value = st; $(b).value = en; fn(); }
+const dBtns = (a, b, fn) => `<button class="g2" onclick="qdR('${a}','${b}',${fn},0)">Aaj</button><button class="g2" onclick="qdR('${a}','${b}',${fn},1)">Kal</button><button class="g2" onclick="qdR('${a}','${b}',${fn},'m')">Is mahine</button>`;
+const SF = { d: "", c: "", s: "", r: "", a: "", g: "", p: "", m: "" };
+let SS = { k: "d", dir: -1 };
+const isoD = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+function qd(x){ const n = new Date(); let a = isoD(n), b = a; if (x === 1) { n.setDate(n.getDate() - 1); a = b = isoD(n); } if (x === "m") a = a.slice(0, 8) + "01"; $("f").value = a; $("t").value = b; sTbl(); }
+function clrF(){ Object.keys(SF).forEach(k => SF[k] = ""); SS = { k: "d", dir: -1 }; r(); }
+function sortBy(k){ SS = { k, dir: SS.k === k ? -SS.dir : (["d", "a", "g", "p"].includes(k) ? -1 : 1) }; sTbl(); }
+function numOk(x, e){
+  e = (e || "").trim(); if (!e) return true;
+  const mm = e.match(/^(>=|<=|>|<|=)\s*(-?\d+(?:\.\d+)?)$/); if (!mm) return String(x).includes(e);
+  const n = +mm[2]; return mm[1] === ">" ? x > n : mm[1] === "<" ? x < n : mm[1] === ">=" ? x >= n : mm[1] === "<=" ? x <= n : x === n;
+}
+function salesHead(){
+  const fy = D.sales.filter(s => inFY(s.d));
+  const opt = (arr, cur) => `<option value="">(Sab)</option>` + [...new Set(arr)].sort((a, b) => a.localeCompare(b)).map(x => `<option value="${h(x)}"${x === cur ? " selected" : ""}>${h(x)}</option>`).join("");
+  const th = (k, l) => `<th style="cursor:pointer" title="Sort karne ke liye click karein" onclick="sortBy('${k}')">${l} <span id="ar_${k}"></span></th>`;
+  const fi = k => `<th><input class="fi" value="${h(SF[k])}" placeholder="Filter" oninput="SF.${k}=this.value;sTbl()"></th>`;
+  const fs = (k, arr) => `<th><select class="fi" onchange="SF.${k}=this.value;sTbl()">${opt(arr, SF[k])}</select></th>`;
+  return `<thead><tr>${th("d", "Date")}${th("c", "Customer")}${th("s", "Service")}${th("r", "Remark")}${th("a", "Amount")}${th("g", "Received")}${th("p", "Pending")}${th("m", "Mode")}<th></th></tr>
+  <tr class="fr">${fi("d")}${fs("c", fy.map(x => cn(x.cid)))}${fs("s", fy.map(x => x.svc))}${fi("r")}${fi("a")}${fi("g")}${fi("p")}${fs("m", fy.map(x => x.mode))}<th></th></tr></thead>`;
+}
+function sTbl(){
+  const q = v("q").toLowerCase(), f = v("f"), t = v("t"), pm = pendMap();
+  const rs = D.sales.filter(s => {
+    const pe = pm[s.id];
+    return inFY(s.d) && (!f || s.d >= f) && (!t || s.d <= t) && (!q || [cn(s.cid), s.svc, s.rmk, s.amt, s.d, fd(s.d), s.mode].join(" ").toLowerCase().includes(q)) &&
+      (!SF.d || (fd(s.d) + " " + s.d).includes(SF.d)) && (!SF.c || cn(s.cid) === SF.c) && (!SF.s || s.svc === SF.s) && (!SF.r || (s.rmk || "").toLowerCase().includes(SF.r.toLowerCase())) &&
+      numOk(s.amt, SF.a) && numOk(s.rec, SF.g) && numOk(pe, SF.p) && (!SF.m || s.mode === SF.m);
+  });
+  const val = (s, k) => k === "d" ? s.d : k === "c" ? cn(s.cid).toLowerCase() : k === "s" ? s.svc.toLowerCase() : k === "r" ? (s.rmk || "").toLowerCase() : k === "a" ? s.amt : k === "g" ? s.rec : k === "p" ? pm[s.id] : s.mode;
+  rs.sort((a, b) => { const x = val(a, SS.k), y = val(b, SS.k), c = typeof x === "number" ? x - y : String(x).localeCompare(String(y)); return c ? c * SS.dir : (b.id || "").localeCompare(a.id || ""); });
+  ["d", "c", "s", "r", "a", "g", "p", "m"].forEach(k => { const e = $("ar_" + k); if (e) e.textContent = SS.k === k ? (SS.dir > 0 ? "▲" : "▼") : ""; });
+  const td = (c, x) => `<td${c ? ` class="${c}"` : ""}>${x}</td>`;
+  $("sinfo").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${rs.length} entries | Kul amount ${m(rs.reduce((a, x) => a + x.amt, 0))} | Received ${m(rs.reduce((a, x) => a + x.rec, 0))} | Pending ${m(rs.reduce((a, x) => a + pm[x.id], 0))} <span style="color:var(--m)">(customer ka payment purane bill se kat'ta hai) &nbsp;|&nbsp; <b class="g">Hara = poora mila</b> &nbsp; <b class="r">Laal = baaki</b></span></p>`;
+  $("sbody").innerHTML = rs.map(s => { const pe = pm[s.id]; return `<tr class="${pe > 0 ? "rd" : "gr"}">${td("nw", fd(s.d))}${td("", `<button class="lk" onclick="openLedger('${s.cid || "W"}')">${h(cn(s.cid))}</button>`)}${td("sv", h(s.svc))}${td("rk", h(s.rmk))}${td("nw", m(s.amt) + (sFee(s) > 0 ? `<br><small style="color:var(--m)">Svc ${m(sSvc(s))} + Fees ${m(sFee(s))}</small>` : ""))}${td("nw", m(s.rec) + (advAmt(s) > 0 ? `<br><small style="color:var(--m)">+ ${m(advAmt(s))} advance</small>` : ""))}${td("nw", pe ? `<span class="r">${m(pe)}</span>` : "-")}${td("nw", s.mode)}${td("", X("sales", s.id))}</tr>`; }).join("") || `<tr><td colspan="9" class="e">Koi entry nahi mili</td></tr>`;
+}
+function vCust(){
+  if (L) return vLedger();
+  LF = LT = "";
+  return `<h2>Customers</h2><div class="box"><div class="row">${F("Name", `<input id="cna">`)}${F("Phone", `<input id="cph">`)}${F("Address", `<input id="cad">`)}${D.gst.on ? F("GSTIN (optional)", `<input id="cgs" maxlength="15" style="width:190px;text-transform:uppercase">`) : ""}<button class="b" onclick="addCust()">Add customer</button></div></div>
+  <div class="box"><div class="row" style="margin-bottom:10px">${F("Search customer (naam ya phone)", `<input id="cq" value="${h(CQ)}" oninput="CQ=this.value;cTbl()" style="width:260px">`)}<button class="g2" onclick="resetC()">Reset</button><button class="g2" id="mtog" style="margin-left:auto;font-size:12px;padding:6px 10px" title="Do ya zyada customers ko ek karne ke liye" onclick="mToggle()">⇄ Merge</button></div><div id="cdup"></div><div id="mbar"></div><div id="cinfo"></div><div class="w"><table class="st">${custHead()}<tbody id="cbody"></tbody></table></div></div>`;
+}
+function addCust(){ if (need(v("cna").trim(), "Customer ka naam bharein.")) return;
+  if (nameTaken(v("cna"))) return alert("Is naam ka customer pehle se hai. Alag vyakti hai to naam ke saath pehchaan likhein (jaise Amit (Hisar)). Ek hi vyakti hai to usi ka ledger use karein."); if (v("cph").trim() && !waNum(v("cph")) && !confirm("Phone number sahi nahi lag raha (10 ank chahiye). Phir bhi save karein?")) return; const gs = $("cgs") ? v("cgs").trim().toUpperCase() : "";
+  if (gs && !GSTIN_RE.test(gs) && !confirm("GSTIN ka format sahi nahi lag raha. Phir bhi save karein?")) return;
+  D.customers.push({ id: uid(), name: v("cna").trim(), phone: v("cph"), addr: v("cad"), gstin: gs }); save(); r(); }
+const GSTIN_RE = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+function vLedger(){
+  const c = L === "W" ? WALK : D.customers.find(x => x.id === L); if (!c) { L = null; return vCust(); }
+  const rows = custRows(L).reverse();
+  return `<h2>${h(c.name)} <button class="g2" onclick="L=null;r()">Back</button> <button class="b" onclick="printCust()">Print / Save PDF</button> ${cbal(L) > 0 && waNum(c.phone) ? `<button class="g2" onclick="waRemind()">WhatsApp par QR bhejein</button>` : ""}</h2><p class="m">${h(c.phone)} ${h(c.addr)}${c.gstin ? " | GSTIN: " + h(c.gstin) : ""}${c.aka && c.aka.length ? "<br>Pehle ke naam (merge hue): " + h(c.aka.join(", ")) : ""}</p>
+  <div class="cards"><div class="c"><small>${balLbl(cbal(L))}</small><b class="${balCls(cbal(L))}">${m(cbal(L))}</b></div></div>
+  ${upiBox()}<div class="box"><div class="row">${F("Date", `<input type="date" id="pd" value="${today()}">`)}${F("Amount received", `<input type="text" inputmode="decimal" class="amt" id="pa">`)}${F("Mode", `<select id="pm"><option>Cash</option><option>UPI</option></select>`)}${F("Remark", `<input id="pk" style="width:200px">`)}<button class="b" onclick="addPay()">Add payment</button></div></div>
+  <div class="box"><p class="m"><b class="r">Laal</b> = service di (customer se lena hai) &nbsp;|&nbsp; <b class="g">Hara</b> = customer se paisa mila</p><div class="row" style="margin-bottom:10px">${F("Statement: From", `<input type="date" id="lf" value="${h(LF)}" onchange="LF=this.value;cLed()">`)}${F("To", `<input type="date" id="lt" value="${h(LT)}" onchange="LT=this.value;cLed()">`)}${ordSel("cLed()")}${stmBtns("c")}<button class="g2" onclick="LF=LT='';r()">Saari entry</button></div><div id="cled"></div></div>`;
+}
+function addPay(){ const a = N(v("pa")); if (need(a, "Amount bharein.")) return; D.payments.push({ id: uid(), d: v("pd") || today(), cid: cm(L), amt: a, mode: v("pm"), rmk: v("pk").trim() }); save(); r(); }
+const CATS = ["Customer ke kaam ka kharcha (fees, bill)", "Paper, Ink aur Stationery", "Printer / Mantra EMI", "Loan EMI aur Charges", "Repair", "Banner / Advertising", "Furniture aur Shop saman", "Registration / Retailer ID", "Transport aur Misc", "Shop rent", "Electricity", "Internet", "Salary", "Other"];
+function vExp(){
+  const rows = allExp().filter(x => inFY(x.d));
+  return `<h2>Expenses</h2><div class="box"><div class="row">${F("Date", `<input type="date" id="ed" value="${today()}">`)}${F("Category", `<input id="ec" list="cl"><datalist id="cl">${CATS.map(x => `<option>${x}</option>`).join("")}</datalist>`)}${F("Amount", `<input type="text" inputmode="decimal" class="amt" id="ea" style="width:120px">`)}${D.gst.on ? F("GST (ITC) agar hai", `<input type="text" inputmode="decimal" class="amt" id="ei" style="width:110px">`) : ""}${F("Mode", `<select id="em"><option>Cash</option><option>UPI</option></select>`)}${F("Note", `<input id="en" style="width:200px">`)}<button class="b" onclick="addExp()">Add expense</button></div></div>
+  <div class="box"><div class="row">${F("Search (category, note, amount, date)", `<input id="eq" oninput="eTbl()" style="width:270px">`)}${F("Category", `<select id="ec2" onchange="eTbl()"><option value="">(Sab)</option>${[...new Set(rows.map(x => x.cat))].sort().map(x => `<option value="${h(x)}">${h(x)}</option>`).join("")}</select>`)}${F("From", `<input type="date" id="ef" onchange="eTbl()">`)}${F("To", `<input type="date" id="et" onchange="eTbl()">`)}${dBtns("ef", "et", "eTbl")}<button class="g2" onclick="clrE()">Clear all filters</button></div><div id="etbl"></div></div>`;
+}
+function clrE(){ ["eq", "ec2", "ef", "et"].forEach(i => { $(i).value = ""; }); eTbl(); }
+function eTbl(){
+  const q = v("eq").toLowerCase(), c = v("ec2"), f = v("ef"), t = v("et");
+  const rows = allExp().filter(x => inFY(x.d) && (!f || x.d >= f) && (!t || x.d <= t) && (!c || x.cat === c) && (!q || [x.cat, x.note, x.amt, fd(x.d)].join(" ").toLowerCase().includes(q)));
+  $("etbl").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${rows.length} entries | Total: <b>${m(rows.reduce((a, x) => a + x.amt, 0))}</b> (lenders ko diye gaye paise bhi shamil)</p>` + T(["Date", "Category", "Amount", "Mode", "Note", ""], rows.map(x => R(fd(x.d), h(x.cat), m(x.amt), x.mode, h(x.note), X(x.c, x.id))));
+}
+function addExp(){ const a = N(v("ea")); if (need(a && v("ec").trim(), "Category aur amount bharein.")) return; D.expenses.push({ id: uid(), d: v("ed") || today(), cat: v("ec").trim(), amt: a, note: v("en"), mode: v("em") || "Cash", itc: $("ei") ? N(v("ei")) : 0 });
+  const dd = v("ed") || today(); if (FY !== "all" && fyOf(dd) !== FY) FY = fyOf(dd);
+  save(); r(); }
+const PF = { n: "", t: "", b: "" };
+let PS = { k: "n", dir: 1 }, PSHOW = "all";
+const pStat = p => { const tx = D.ptx.filter(t => t.pid === p.id), du = tx.filter(t => t.kind === "due").reduce((a, t) => a + t.amt, 0), pd = tx.filter(t => t.kind === "paid").reduce((a, t) => a + t.amt, 0); return { du, pd, b: r2(du - pd) }; };
+function resetP(){ Object.keys(PF).forEach(k => PF[k] = ""); PS = { k: "n", dir: 1 }; PSHOW = "all"; r(); }
+function pSort(k){ PS = { k, dir: PS.k === k ? -PS.dir : (["du", "pd", "b"].includes(k) ? -1 : 1) }; pTbl(); }
+function lendHead(){
+  const th = (k, l) => `<th style="cursor:pointer" title="Sort karne ke liye click karein" onclick="pSort('${k}')">${l} <span id="pa_${k}"></span></th>`;
+  const fi = (k, ph) => `<th><input class="fi" value="${h(PF[k])}" placeholder="${ph}" oninput="PF.${k}=this.value;pTbl()"></th>`;
+  return `<thead><tr>${th("n", "Name")}${th("t", "Type")}${th("du", "Total dena")}${th("pd", "Diya")}${th("b", "Baaki")}<th>Status</th><th></th></tr><tr class="fr">${fi("n", "Filter")}${fi("t", "Filter")}<th></th><th></th>${fi("b", "Jaise >0")}<th></th><th></th></tr></thead>`;
+}
+function pTbl(){
+  const rs = D.parties.map(p => ({ p, ...pStat(p) })).filter(x => (PSHOW === "all" || (PSHOW === "closed" ? x.p.closed : !x.p.closed)) && (!PF.n || x.p.name.toLowerCase().includes(PF.n.toLowerCase())) && (!PF.t || x.p.type.toLowerCase().includes(PF.t.toLowerCase())) && numOk(x.b, PF.b));
+  const val = x => PS.k === "n" ? x.p.name.toLowerCase() : PS.k === "t" ? x.p.type.toLowerCase() : x[PS.k];
+  rs.sort((a, b) => { const x = val(a), y = val(b), c = typeof x === "number" ? x - y : String(x).localeCompare(String(y)); return c * PS.dir; });
+  ["n", "t", "du", "pd", "b"].forEach(k => { const e = $("pa_" + k); if (e) e.textContent = PS.k === k ? (PS.dir > 0 ? "▲" : "▼") : ""; });
+  const sum = k => r2(rs.reduce((a, x) => a + x[k], 0));
+  $("pinfo").innerHTML = `<p class="m">${rs.length} lenders | Total dena ${m(sum("du"))} | Diya ${m(sum("pd"))} | Baaki <b class="${sum("b") > 0 ? "r" : "g"}">${m(sum("b"))}</b></p>`;
+  $("pbody").innerHTML = rs.map(x => `<tr class="${x.p.closed ? "cl" : ""}"><td><button class="lk" onclick="P='${x.p.id}';r()">${h(x.p.name)}</button></td><td>${h(x.p.type)}</td><td class="nw">${m(x.du)}</td><td class="nw">${m(x.pd)}</td><td class="nw"><b class="${x.b > 0 ? "r" : "g"}">${m(x.b)}</b></td><td>${x.p.closed ? "🔒 Closed" + (x.p.closedOn ? " " + fd(x.p.closedOn) : "") : "✅ Active"}${x.p.auto && x.p.auto.on ? ` <small style="color:var(--m)">↻ ${m(x.p.auto.amt)}/mahina${nextAuto(x.p) ? " | agli " + fd(nextAuto(x.p).d) : ""}</small>` : ""}</td><td>${x.p.closed ? `<button class="g2" onclick="reopenParty('${x.p.id}')">Reopen</button>` : X("parties", x.p.id)}</td></tr>`).join("") + RC("tt", "Total", "", m(sum("du")), m(sum("pd")), m(sum("b")), "", "");
+  if (!rs.length) $("pbody").innerHTML = `<tr><td colspan="7" class="e">Koi lender nahi mila</td></tr>`;
+}
+function vLend(){
+  if (P) return vParty();
+  PLF = PLT = "";
+  return `<h2>Lenders (dene wale)</h2><div class="box"><div class="row">${F("Name", `<input id="ln" placeholder="Shop malik, bijli vibhag...">`)}${F("Type", `<select id="lt"><option>Shop rent</option><option>Electricity</option><option>Loan</option><option>Other</option></select>`)}<button class="b" onclick="addParty()">Add lender</button></div></div>
+  <div class="box"><div class="row" style="margin-bottom:10px">${F("Dikhayein", `<select onchange="PSHOW=this.value;pTbl()"><option value="all"${PSHOW === "all" ? " selected" : ""}>Sab (Active + Closed)</option><option value="active"${PSHOW === "active" ? " selected" : ""}>Sirf Active</option><option value="closed"${PSHOW === "closed" ? " selected" : ""}>Sirf Closed</option></select>`)}<button class="g2" onclick="resetP()">Reset</button></div><div id="pinfo"></div><div class="w"><table class="st">${lendHead()}<tbody id="pbody"></tbody></table></div></div>`;
+}
+function addParty(){ if (need(v("ln").trim(), "Naam bharein.")) return;
+  if (D.parties.some(p => norm(p.name) === norm(v("ln")))) return alert("Is naam ka lender pehle se hai."); D.parties.push({ id: uid(), name: v("ln").trim(), type: v("lt") }); save(); r(); }
+const mshort = mk => ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][+mk.slice(5, 7) - 1] + "-" + mk.slice(2, 4);
+const nextMk = mk => { let [y, mo] = mk.split("-").map(Number); mo++; if (mo > 12) { mo = 1; y++; } return y + "-" + String(mo).padStart(2, "0"); };
+function ledRows(id){ let b = 0; return D.ptx.filter(t => t.pid === id).sort((a, z) => a.d.localeCompare(z.d) || a.id.localeCompare(z.id)).map(t => (b += t.kind === "due" ? t.amt : -t.amt, { ...t, b })).reverse(); }
+function vParty(){
+  const p = D.parties.find(x => x.id === P); if (!p) { P = null; return vLend(); }
+  const cl = !!p.closed, a = p.auto, lastDue = D.ptx.filter(t => t.pid === P && t.kind === "due").map(t => t.d.slice(0, 7)).sort().pop();
+  const defFrom = a && a.from ? a.from : lastDue || today().slice(0, 7), na = a && a.on ? nextAuto(p) : null;
+  return `<h2>${h(p.name)} ${cl ? `<span class="r" style="font-size:14px">🔒 CLOSED</span>` : ""} <button class="g2" onclick="P=null;r()">Back</button> <button class="b" onclick="printParty()">Print / Save PDF</button> ${cl ? `<button class="b" onclick="reopenParty('${p.id}')">Reopen account</button>` : `<button class="g2" onclick="closeParty('${p.id}')">Account close karein</button>`}</h2>
+  <div class="cards"><div class="c"><small>${pbal(P) > 0 ? "Lender ko dena hai" : pbal(P) < 0 ? "Lender se wapas lena hai / Advance" : "Hisaab barabar"}</small><b class="${pbal(P) > 0 ? "r" : "g"}">${m(pbal(P))}</b></div></div>
+  ${cl ? `<div class="box" style="border-color:var(--r)">Ye account <b>close</b> hai${p.closedOn ? " (" + fd(p.closedOn) + " se)" : ""}. Isme nayi entry nahi judegi aur har mahine ki auto entry band hai. Dobara chalu karne ke liye "Reopen account" dabayein.</div>` : `<div class="box"><div class="row">${F("Date", `<input type="date" id="td" value="${today()}">`)}${F("Entry", `<select id="tk"><option value="due">Naya bill / kiraya (dena hai)</option><option value="paid">Paise diye (paid)</option></select>`)}${F("Amount", `<input type="text" inputmode="decimal" class="amt" id="ta" style="width:120px">`)}${F("Mode (paid ho to)", `<select id="tm"><option>Cash</option><option>UPI</option></select>`)}${F("Note", `<input id="tn">`)}<button class="b" onclick="addPtx()">Add entry</button></div><p class="m">"Paise diye" apne aap ${h(p.type)} ke kharche mein ginti hoti hai.</p></div>
+  <div class="box"><h3>↻ Har mahine auto entry (kiraya / bill)</h3>${a && a.on ? `<p class="m">Chalu hai: <b>${m(a.amt)}</b>, <b>${mlabel(a.from)}</b> ke kiraye se. Entry har mahine ki <b>${a.day}</b> tareekh ko judti hai ${a.adv ? "(usi mahine ka kiraya, advance)" : "(pichle mahine ka kiraya)"}.${na ? " <b>Agli entry: " + fd(na.d) + "</b> (" + mshort(na.mk) + " ka kiraya)." : ""}</p>` : `<p class="m">Abhi band hai. Chalu karne par har mahine ki tareekh aate hi "Due" ki entry apne aap judegi.</p>`}<div class="row">${F("Amount (₹)", `<input type="text" inputmode="decimal" class="amt" id="aa" value="${a ? a.amt : ""}" style="width:110px">`)}${F("Mahine ka din (1-28)", `<input type="number" id="ad_" min="1" max="28" value="${a ? a.day : 1}" style="width:90px">`)}${F("Kis mahine ke kiraye se shuru", `<input type="month" id="af" value="${defFrom}">`)}${F("Entry kab judegi", `<select id="aw"><option value="arr"${a && a.adv ? "" : " selected"}>Agle mahine ki tareekh par (pichle mahine ka kiraya)</option><option value="adv"${a && a.adv ? " selected" : ""}>Usi mahine ki tareekh par (advance)</option></select>`)}${F("Note", `<input id="an_" value="${h(a ? a.note : "Month rent")}" style="width:170px">`)}<button class="b" onclick="saveAuto()">Auto chalu / save</button>${a && a.on ? `<button class="g2" onclick="stopAuto()">Auto band karein</button>` : ""}</div><p class="m">Pehle ki entry dubara nahi judti. Software band rehne par bhi, kholte hi chhooti hui mahino ki entry judd jati hai.</p></div>`}
+  <div class="box"><div class="row" style="margin-bottom:10px">${F("Search (note, date)", `<input id="lq" oninput="lTbl()" style="width:240px">`)}${F("Entry", `<select id="lk" onchange="lTbl()"><option value="">Sab</option><option value="due">Due</option><option value="paid">Paid</option></select>`)}${F("Statement: From", `<input type="date" id="plf" value="${h(PLF)}" onchange="PLF=this.value;lTbl()">`)}${F("To", `<input type="date" id="plt" value="${h(PLT)}" onchange="PLT=this.value;lTbl()">`)}${ordSel("lTbl()")}${stmBtns("p")}<button class="g2" onclick="PLF=PLT='';r()">Saari entry</button></div><div id="ltbl"></div></div>`;
+}
+function lTbl(){
+  const p = D.parties.find(x => x.id === P); if (!p) return;
+  const q = v("lq").toLowerCase(), k = v("lk"), { rows: pr, open, close } = pLedRows(), per = !!(PLF || PLT);
+  const rows = pr.filter(t => (!k || t.kind === k) && (!q || [t.note, fd(t.d), t.amt].join(" ").toLowerCase().includes(q)));
+  const asc = LORD === "asc", ord = asc ? rows.slice().reverse() : rows;
+  const f = t => RC(t.kind === "due" ? "rd" : "gr", fd(t.d), t.kind === "due" ? `<b class="r">Due</b>` : `<b class="g">Paid</b>`, `<b class="${t.kind === "due" ? "r" : "g"}">${m(t.amt)}</b>`, h(t.note), m(t.b), p.closed ? "" : X("ptx", t.id));
+  const op = per ? [RC("op", PLF ? fd(PLF) : "", "", "", "Opening balance (pichla baaki)", m(open), "")] : [];
+  $("ltbl").innerHTML = `<p class="m"><b class="r">Laal (Due)</b> = lender ka bill ya kiraya (dena hai) &nbsp;|&nbsp; <b class="g">Hara (Paid)</b> = aapne paise diye</p>` + T(["Date", "Entry", "Amount", "Note", "Baaki", ""],
+    [...(asc ? op : []), ...ord.map(f), ...(asc ? [] : op), RC("tt", "", "Total", `<span class="r">Due ${m(lsum(rows, "due"))}</span><br><span class="g">Paid ${m(lsum(rows, "paid"))}</span>`, "", m(close), "")]);
+}
+function closeParty(id){
+  const p = D.parties.find(x => x.id === id); if (!p) return; const b = pStat(p).b;
+  if (!confirm((b ? "Is lender ka baaki " + m(b) + " hai. " : "") + "Account close karein? Close hone par isme nayi entry nahi judegi aur auto entry band ho jayegi. Dobara Reopen kar sakte ho.")) return;
+  p.closed = true; p.closedOn = today(); if (p.auto) p.auto.on = false; save(); r();
+}
+function reopenParty(id){ const p = D.parties.find(x => x.id === id); if (!p || !confirm("Account dobara chalu karein?")) return; p.closed = false; delete p.closedOn; save(); r(); }
+function saveAuto(){
+  const p = D.parties.find(x => x.id === P); if (!p || p.closed) return;
+  const amt = N(v("aa")), day = Math.min(28, Math.max(1, Math.round(N(v("ad_")) || 1))), from = v("af");
+  if (need(amt > 0 && from, "Amount aur shuru ka mahina bharein.")) return;
+  p.auto = { on: true, amt, day, from, adv: v("aw") === "adv", note: v("an_").trim() || "Month rent" }; autoDue(); save(); r();
+}
+function stopAuto(){ const p = D.parties.find(x => x.id === P); if (p && p.auto) { p.auto.on = false; save(); r(); } }
+function fixAuto(){
+  if (D.autoV2) return;
+  D.autoV2 = true;
+  D.parties.forEach(p => { if (p.auto && p.auto.adv === undefined) p.auto.adv = false; });
+  D.ptx = D.ptx.filter(t => {
+    if (!t.auto || !t.mk) return true;
+    const p = D.parties.find(x => x.id === t.pid), day = p && p.auto ? p.auto.day : (+t.d.slice(8) || 1), d = nextMk(t.mk) + "-" + String(day).padStart(2, "0");
+    if (d > today()) return false;
+    t.d = d; return true;
+  });
+  save();
+}
+function nextAuto(p){
+  const a = p.auto; if (!a || !/^\d{4}-\d\d$/.test(a.from || "")) return null;
+  for (let mk = a.from, i = 0; i < 600; mk = nextMk(mk), i++) if (!D.ptx.some(t => t.pid === p.id && t.auto && t.mk === mk) && !(p.autoSkip || []).includes(mk)) return { mk, d: (a.adv ? mk : nextMk(mk)) + "-" + String(a.day).padStart(2, "0") };
+  return null;
+}
+function autoDue(){
+  fixAuto(); let n = 0;
+  D.parties.forEach(p => {
+    const a = p.auto; if (!a || !a.on || p.closed || !/^\d{4}-\d\d$/.test(a.from || "")) return;
+    for (let mk = a.from, i = 0; i < 600; mk = nextMk(mk), i++) {
+      const d = (a.adv ? mk : nextMk(mk)) + "-" + String(a.day).padStart(2, "0");
+      if (d > today()) break;
+      if (!D.ptx.some(t => t.pid === p.id && t.auto && t.mk === mk) && !(p.autoSkip || []).includes(mk)) { D.ptx.push({ id: uid(), pid: p.id, d, kind: "due", amt: a.amt, note: mshort(mk) + " " + a.note + " (auto)", auto: true, mk }); n++; }
+    }
+  });
+  if (n) { save(); toast(n + " auto entry (kiraya/bill) judi."); if (V === "lend") r(); }
+  return n;
+}
+function addPtx(){ const pp = D.parties.find(x => x.id === P); if (pp && pp.closed) return alert("Ye account close hai. Pehle Reopen karein."); const a = N(v("ta")); if (need(a, "Amount bharein.")) return; D.ptx.push({ id: uid(), pid: P, d: v("td") || today(), kind: v("tk"), amt: a, note: v("tn"), mode: v("tm") || "Cash" }); save(); r(); }
+function vAst(){
+  return `<h2>Assets</h2><div class="box"><div class="row">${F("Asset", `<input id="an" placeholder="PC, table, chair...">`)}${F("Date", `<input type="date" id="ad" value="${today()}">`)}${F("Price (each)", `<input type="text" inputmode="decimal" class="amt" id="ac" style="width:120px">`)}${F("Qty", `<input type="number" id="aq" value="1" min="1" style="width:70px">`)}<button class="b" onclick="addAst()">Add asset</button></div></div>
+  <div class="box"><p class="m">Total asset value: <b>${m(D.assets.reduce((a, x) => a + x.cost * x.qty, 0))}</b></p>${T(["Asset", "Date", "Price", "Qty", "Total", ""], D.assets.map(x => R(h(x.name), fd(x.d), m(x.cost), x.qty, m(x.cost * x.qty), X("assets", x.id))))}</div>`;
+}
+function addAst(){ if (need(v("an").trim() && N(v("ac")), "Asset ka naam aur price bharein.")) return; D.assets.push({ id: uid(), name: v("an").trim(), d: v("ad") || today(), cost: N(v("ac")), qty: Math.max(1, N(v("aq"))) }); save(); r(); }
+function vBk(){
+  return `<h2>Data folder, Backup aur Excel</h2>
+  <div class="tb"><button class="g2" onclick="uiAll(true,BKS)">Sab kholein</button><button class="g2" onclick="uiAll(false,BKS)">Sab band karein</button></div>
+  <details class="box dsec" ${uiOp("bd", true)} ontoggle="uiSec('bd',this.open)"><summary>☁ Google Drive (kahin se bhi kholein)</summary>
+  ${drv.on ? `<p class="m">Aapka data Google Drive me save hota hai: <b>${FILE}</b>. Roz ka backup: <b>CSC-Backup-tareekh.json</b> (60 din tak). Drive me file par right-click karke "Manage versions" se purane version bhi mil jate hain.</p><p class="m">Status: <b>${h(bkText()[1])}</b></p><div class="row"><button class="b" onclick="driveFlush(true)">Abhi sync karein</button><button class="g2" onclick="driveLogout()">Google se alag karein</button></div>` : `<p class="m">Abhi data ${local ? "sirf browser me" : "computer ke folder me"} hai. Drive se jodne par data Drive me chala jata hai aur kisi bhi device par khulta hai.</p><div class="row"><button class="b" onclick="driveStart()">Google Drive se jodein</button></div>`}
+  <div class="row" style="margin-top:10px"><button class="b" id="instBtn" style="display:${instEv && !isStandalone() ? "inline-block" : "none"}" onclick="doInstall()">📱 Install karein (icon ban jayega)</button></div>
+  ${isStandalone() ? `<p class="m">✅ App install hai.</p>` : `<p class="m">Install: Android Chrome me menu (⋮) → "Install app". iPhone Safari me Share → "Add to Home Screen". Computer Chrome me address bar ke daayein taraf install ka icon.</p>`}
+  <p class="m">Google Client ID: <b>${GCID ? h(GCID.slice(0, 12)) + "..." : "set nahi"}</b> <button class="g2" onclick="setCid()">Badlein</button></p></details>
+  <details class="box dsec" ${uiOp("b1", true)} ontoggle="uiSec('b1',this.open)"><summary>Data folder</summary>
+  ${drv.on ? `<p class="m">Abhi data Google Drive me hai. Computer ke folder me bhi rakhna ho to "Folder chunein" dabayein.</p>` : local ? `<p class="m"><b class="r">Folder juda nahi hai.</b> Data sirf browser mein hai. Chrome ya Edge mein kholkar folder chunein.</p>` : `<p class="m">Aapka sara data is folder mein save hota hai: <b>${h(dir ? dir.name : "")}</b></p>
+  <p class="m">Data file: <b>${FILE}</b> | Roz ka backup: <b>Backups</b> folder (har din ek file, 60 din tak rakhi jati hai).</p>
+  <p class="m">Ye software kisi bhi Chrome ya Edge mein khulega. Bas ek baar wahi folder chunna hoga. Browser ka data saaf karne se kuch nahi jayega.</p>`}
+  <div class="row"><button class="b" onclick="changeDir()">${local || drv.on ? "Folder chunein" : "Folder badlein"}</button></div></details>
+  <details class="box dsec" ${uiOp("b2")} ontoggle="uiSec('b2',this.open)"><summary>⚡ Fast-entry buttons (Daily sales / Invoice)</summary>
+  <p class="m">In buttons par ek click se service aur amount line mein bhar jata hai. Same button dobara dabane par amount jud jata hai (jaise Photocopy x3).</p>
+  ${D.quick.length ? T(["Service", "Amount (₹)", ""], D.quick.map((q, i) => R(`<input value="${h(q.svc)}" style="width:220px" onchange="qkSet(${i},'svc',this.value)">`, `<input type="text" inputmode="decimal" class="amt" value="${q.amt}" style="width:110px" onchange="qkSet(${i},'amt',this.value)">`, `<button class="x" onclick="qkDel(${i})">✕</button>`))) : `<p class="m">Abhi koi button nahi hai.</p>`}
+  <div class="row" style="margin-top:10px">${F("Service", `<input id="qks" placeholder="PAN Card" style="width:220px">`)}${F("Amount (₹)", `<input type="text" inputmode="decimal" class="amt" id="qka" style="width:110px">`)}<button class="b" onclick="qkAdd()">Button jodein</button></div></details>
+  <details class="box dsec" ${uiOp("b3")} ontoggle="uiSec('b3',this.open)"><summary>UPI ID Settings (QR ke liye)</summary>
+  <p class="m">Customer ledger ke QR mein yahi UPI ID dikhengi. Label aur UPI ID badal sakte ho, naya jod sakte ho ya hata sakte ho. ◉ se default chunein.</p>
+  ${D.upis.length ? T(["Default", "Label (jaise PhonePe)", "UPI ID", ""], D.upis.map((u, i) => R(`<input type="radio" name="upid" ${i === D.upiSel ? "checked" : ""} onchange="upiDef(${i})">`, `<input value="${h(u.label)}" style="width:170px" onchange="upiSet(${i},'label',this.value)">`, `<input value="${h(u.id)}" style="width:250px" onchange="upiSet(${i},'id',this.value)">`, `<button class="x" onclick="upiDel(${i})">✕</button>`))) : `<p class="m"><b class="r">Abhi koi UPI ID nahi hai.</b> Neeche se apni UPI ID jodein.</p>`}
+  <div class="row" style="margin-top:10px">${F("Naya label", `<input id="ul" placeholder="PhonePe, Google Pay, Paytm, Airtel Bank...">`)}${F("UPI ID", `<input id="ui" placeholder="name@bank" style="width:250px">`)}<button class="b" onclick="upiAdd()">UPI ID jodein</button></div></details>
+  <details class="box dsec" ${uiOp("b4")} ontoggle="uiSec('b4',this.open)"><summary>Password aur reset ke sawal</summary>
+  <p class="m">Software kholte samay password poocha jata hai. Bhoolne par neeche ke sawalon ke sahi jawab dekar reset kar sakte hain. ${IDLE_MIN} minute kuch na karein to software apne aap lock ho jata hai.</p>
+  <div class="sg">${secForm("change")}</div>
+  <div class="row"><button class="b" onclick="saveSec('change')">Password / sawal badlein</button><button class="g2" onclick="lockNow()">Abhi lock karein</button></div></details>
+  <details class="box dsec" ${uiOp("b5")} ontoggle="uiSec('b5',this.open)"><summary>Dukaan ki jaankari (print mein aati hai)</summary><div class="row">${F("Dukaan ka naam", `<input id="shn" value="${h(D.shop.name)}">`)}${F("Phone", `<input id="shp" value="${h(D.shop.phone)}">`)}${F("Address", `<input id="sha" value="${h(D.shop.addr)}" style="width:260px">`)}<button class="b" onclick="saveShop()">Save</button></div></details>
+  <details class="box dsec" ${uiOp("b6")} ontoggle="uiSec('b6',this.open)"><summary>Excel sheet</summary><p class="m">Monthly summary, sales, customers, expenses, lenders aur assets, har ek alag sheet mein.</p><button class="b" onclick="xl()">Download Excel (.xlsx)</button></details>
+  <details class="box dsec" ${uiOp("b7")} ontoggle="uiSec('b7',this.open)"><summary>Manual backup aur restore</summary><div class="row"><button class="g2" onclick="dlJson()">Download backup (.json)</button>${F("Backup se wapas laayein", `<input type="file" accept=".json" onchange="restore(this)">`)}</div></details>`;
+}
+function xl(){
+  const XL = window.XLSX || xmlShim;
+  const wb = XL.utils.book_new(), add = (n, a) => XL.utils.book_append_sheet(wb, XL.utils.json_to_sheet(a.length ? a : [{}]), n), mo = months();
+  add("Monthly", Object.keys(mo).sort().map(k => ({ Month: k, Income: mo[k].i, Expense: mo[k].e, Profit: mo[k].i - mo[k].e })));
+  add("FY summary", fyList().map(a => { const q = Object.values(months(a)), i = q.reduce((x, y) => x + y.i, 0), e = q.reduce((x, y) => x + y.e, 0); return { FY: fyLbl(a), Income: i, Expense: e, Profit: i - e }; }));
+  const pm0 = pendMap();
+  add("Sales", D.sales.map(s => ({ FY: fyLbl(fyOf(s.d)), Date: s.d, Customer: cn(s.cid), Service: s.svc, Remark: s.rmk || "", Amount: s.amt, "Service charge": sSvc(s), Fees: sFee(s), Received: s.rec, Pending: pm0[s.id], Mode: s.mode })));
+  add("Customer payments", D.payments.map(p => ({ Date: p.d, Customer: cn(p.cid), Amount: p.amt, Mode: p.mode, Remark: p.rmk || "" })));
+  add("Customers", [WALK, ...D.customers].filter(c => c.id !== "W" || cbal("W")).map(c => ({ Name: c.name, Phone: c.phone, Address: c.addr, Balance: cbal(c.id) })));
+  add("Expenses", allExp().map(e => ({ FY: fyLbl(fyOf(e.d)), Date: e.d, Category: e.cat, Amount: e.amt, Mode: e.mode || "Cash", Note: e.note })));
+  add("Lenders", D.ptx.map(t => ({ Date: t.d, Lender: pn(t.pid), Entry: t.kind === "due" ? "Due" : "Paid", Amount: t.amt, Mode: t.kind === "paid" ? (t.mode || "Cash") : "", Note: t.note })));
+  add("Assets", D.assets.map(a => ({ Asset: a.name, Date: a.d, Price: a.cost, Qty: a.qty, Total: a.cost * a.qty })));
+  add("Invoices", D.inv.flatMap(i => i.lines.map(l => ({ No: i.no, Type: i.kind, Date: i.d, Customer: i.cname, GSTIN: i.gstin, POS: i.pos, Service: l.svc, SAC: l.sac || "", Gross: l.gross != null ? l.gross : "", Discount: l.disc || 0, Taxable: l.taxable, Rate: l.rate, CGST: l.cgst, SGST: l.sgst, IGST: l.igst, Total: l.total, Cancelled: i.canc ? "Yes" : "" }))));
+  add("GST returns", D.gstRet.map(x => ({ Period: x.per, Form: x.form, Filed: x.d, ARN: x.arn, IGST: x.igst, CGST: x.cgst, SGST: x.sgst, Interest: x.int, Fee: x.fee, Note: x.note })));
+  add("Jobs", D.jobs.map(j => ({ Date: j.d, Customer: j.cname, Mobile: j.phone, Service: j.svc, "Ack no": j.ack, Status: j.st, Note: j.note })));
+  XL.writeFile(wb, "CSC-Hisaab-" + today() + ".xlsx");
+}
+
+/* ---------- edit entries ---------- */
+const FD = {
+  sales: [["d", "Date", "date"], ["cid", "Customer", "c"], ["svc", "Service", "t"], ["rmk", "Remark", "t"], ["amt", "Total Lena (customer se)", "n"], ["fee", "Fees / Govt. Fees (isme se, meri income nahi)", "n"], ["rec", "Received", "n"], ["mode", "Mode", ["Cash", "UPI"]]],
+  payments: [["d", "Date", "date"], ["amt", "Amount", "n"], ["mode", "Mode", ["Cash", "UPI"]], ["rmk", "Remark", "t"]],
+  expenses: [["d", "Date", "date"], ["cat", "Category", "t"], ["amt", "Amount", "n"], ["note", "Note", "t"], ["mode", "Mode", ["Cash", "UPI"]], ["itc", "GST / ITC (agar hai)", "n"]],
+  jobs: [["d", "Date", "date"], ["cname", "Customer", "t"], ["phone", "Mobile", "t"], ["svc", "Service / Form", "t"], ["ack", "Application / Ack no", "t"], ["st", "Status", ["Pending", "In Process", "Ready", "Delivered"]], ["note", "Note", "t"]],
+  gstRet: [["per", "Period (YYYY-MM)", "t"], ["form", "Form", ["GSTR-1", "GSTR-3B", "Other"]], ["d", "Filed on", "date"], ["arn", "ARN / Ack no", "t"], ["igst", "IGST bhara", "n"], ["cgst", "CGST bhara", "n"], ["sgst", "SGST bhara", "n"], ["int", "Interest", "n"], ["fee", "Late fee", "n"], ["note", "Note", "t"]],
+  ptx: [["d", "Date", "date"], ["kind", "Entry (due = dena hai, paid = diya)", ["due", "paid"]], ["amt", "Amount", "n"], ["note", "Note", "t"], ["mode", "Mode (paid ho to)", ["Cash", "UPI"]]],
+  customers: [["name", "Name", "t"], ["phone", "Phone", "t"], ["addr", "Address", "t"], ["gstin", "GSTIN (GST ON ho tab)", "t"]],
+  parties: [["name", "Name", "t"], ["type", "Type", ["Shop rent", "Electricity", "Loan", "Other"]]],
+  assets: [["name", "Asset", "t"], ["d", "Date", "date"], ["cost", "Price (each)", "n"], ["qty", "Qty", "n"]]
+};
+let ED = null;
+function edit(c, id){
+  const o = D[c].find(x => x.id === id); if (!o) return;
+  if (c === "sales" && o.invId && !confirm("Ye entry invoice se judi hai. Badlav karne par invoice ke print mein purana amount hi dikhega. Phir bhi edit karein?")) return;
+  ED = { c, id };
+  const fld = ([k, l, t]) => F(l, t === "c" ? `<select id="e_${k}"><option value="">Walk-in</option>${D.customers.map(x => `<option value="${x.id}"${x.id === o[k] ? " selected" : ""}>${h(x.name)}</option>`).join("")}</select>`
+    : Array.isArray(t) ? `<select id="e_${k}">${t.map(z => `<option${z === o[k] ? " selected" : ""}>${z}</option>`).join("")}</select>`
+    : `<input id="e_${k}" type="${t === "date" ? "date" : "text"}"${t === "n" ? ' inputmode="decimal" class="amt"' : ""} value="${h(o[k])}">`);
+  $("md").innerHTML = `<div class="mb"><h3>Entry edit karein</h3>${FD[c].filter(f => f[0] !== "gstin" || D.gst.on).map(fld).join("")}<div class="row" style="margin-top:8px"><button class="b" onclick="saveEd()">Save changes</button><button class="g2" onclick="closeEd()">Cancel</button></div></div>`;
+  if (c === "sales" && !o.invId && advAmt(o) > 0) $("e_rec").value = r2(o.rec + advAmt(o));
+  $("md").style.display = "flex";
+}
+function closeEd(){ $("md").style.display = "none"; ED = null; }
+function saveEd(){
+  const { c, id } = ED, o = D[c].find(x => x.id === id);
+  if (FD[c].some(f => f[0] === "d") && !v("e_d")) return alert("Date bharein.");
+  const ak = ["amt", "cost"].find(k => FD[c].some(f => f[0] === k));
+  if (ak && c !== "gstRet" && !(N(v("e_" + ak)) > 0)) return alert("Amount 0 se zyada bharein.");
+  if (c === "sales" && !v("e_svc").trim()) return alert("Service ka naam bharein.");
+  if (c === "sales" && N(v("e_fee")) > N(v("e_amt"))) return alert("Fees total amount se zyada nahi ho sakti.");
+  if (c === "sales" && !o.invId) {
+    const over = Math.max(0, r2(N(v("e_rec")) - N(v("e_amt"))));
+    if (over > 0 && !v("e_cid")) return alert("Received amount se zyada hai. Walk-in me extra save nahi hota: customer chunein ya Received kam karein.");
+    if (over > 0 && !firstLine(o)) return alert("Extra paisa is bill ki pehli line me hi likhein.");
+    if (over > 0 && !confirm("Received (" + m(N(v("e_rec"))) + ") amount (" + m(N(v("e_amt"))) + ") se " + m(over) + " zyada hai.\nYe " + m(over) + " customer ke advance / purane baaki me judega aur ledger me isi entry ke saath dikhega.\nOK?")) return;
+  }
+  if (c === "customers" && v("e_phone").trim() && !waNum(v("e_phone")) && !confirm("Phone number sahi nahi lag raha (10 ank chahiye). Phir bhi save karein?")) return;
+  if (c === "customers") { const nn = v("e_name"); if (!nn.trim()) return alert("Naam bharein."); if (nameTaken(nn, id)) return alert("Is naam ka doosra customer pehle se hai. Dono ek hi hain to Merge use karein."); }
+  const advB = c === "sales" ? advOf(o) : [], exT = c === "sales" && !o.invId ? Math.max(0, r2(N(v("e_rec")) - N(v("e_amt")))) : 0, fl = c === "sales" ? firstLine(o) : true;
+  for (const [k, , t] of FD[c]) { if (k === "gstin" && !D.gst.on) continue; const x = v("e_" + k); o[k] = t === "n" ? N(x) : x; }
+  if (c === "customers" && o.gstin) { o.gstin = o.gstin.trim().toUpperCase(); if (!GSTIN_RE.test(o.gstin) && !confirm("GSTIN ka format sahi nahi lag raha. Phir bhi save karein?")) return; }
+  if (c === "jobs" && o.st === "Delivered" && !o.upd) o.upd = today();
+  if (c === "sales") { o.rec = Math.min(o.rec, o.amt); o.fee = Math.min(o.fee || 0, o.amt); if (o.svc.trim() && !D.svc.includes(o.svc)) D.svc.push(o.svc); if (!o.invId && fl) syncAdv(o, advB, exT); }
+  closeEd(); save(); r();
+}
+
+/* ---------- print / save as PDF ---------- */
+function printDoc(title, sub, hd, rows, foot, fname){
+  $("pr").innerHTML = `<table class="pl"><thead><tr><td colspan="${hd.length}" class="ph"><h2>${h(D.shop.name)}</h2><div class="m">${h(D.shop.addr)} ${h(D.shop.phone)}</div><h3>${title}</h3><div class="m">${sub}</div></td></tr><tr>${hd.map(x => `<th>${x}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table><p style="margin-top:12px">${foot}</p><p class="m">Printed on ${fd(today())}</p>`;
+  const old = document.title; document.title = fname + "-" + today();
+  window.print(); document.title = old;
+}
+function printDay(){
+  const d = v("drd") || today(), ss = D.sales.filter(s => s.d === d), ps = D.payments.filter(p => p.d === d), es = allExp().filter(e => e.d === d);
+  const rec = md => r2(ss.filter(s => s.mode === md).reduce((a, s) => a + s.rec, 0) + ps.filter(p => p.mode === md).reduce((a, p) => a + p.amt, 0));
+  const billed = r2(ss.reduce((a, s) => a + s.amt, 0)), got = r2(ss.reduce((a, s) => a + s.rec, 0) + ps.reduce((a, p) => a + p.amt, 0)), exp = r2(es.reduce((a, e) => a + e.amt, 0)), fees = r2(ss.reduce((a, x) => a + sFee(x), 0)), inc = r2(ss.reduce((a, x) => a + incSale(x), 0) + payInc().filter(x => x.d === d).reduce((a, x) => a + x.a, 0));
+  const rows = [...ss.map(s => R("Sale", h(cn(s.cid)), h(s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : "")), m(s.amt), m(s.rec), s.mode)), ...ps.map(p => R("Payment", h(cn(p.cid)), "Baaki ka payment" + (p.rmk ? " (" + h(p.rmk) + ")" : ""), "", m(p.amt), p.mode)), ...es.map(e => R("Kharcha", h(e.cat), h(e.note), m(e.amt), "-", "-"))];
+  printDoc("Din ka report: " + fd(d), "Sales " + ss.length + " | Customer payment " + ps.length + " | Kharcha " + es.length, ["Type", "Customer / Naam", "Detail", "Amount", "Mila", "Mode"], rows, `Kul bill: <b>${m(billed)}</b> | <span style="color:#d92d20">Udhaar (baaki): <b>${m(r2(ss.reduce((a, s) => a + Math.max(0, s.amt - s.rec), 0)))}</b></span> | Cash mila: <b>${m(rec("Cash"))}</b> | UPI mila: <b>${m(rec("UPI"))}</b> | Kul mila: <b>${m(got)}</b><br>${fees ? `Fees (customer ka kharcha, income nahi): <b>${m(fees)}</b> | ` : ""}Meri income: <b>${m(inc)}</b> | Kharcha: <b>${m(exp)}</b> | Net (income - kharcha): <b>${m(r2(inc - exp))}</b>`, "Din-report-" + d);
+}
+function printCust(){
+  const c = L === "W" ? WALK : D.customers.find(x => x.id === L); if (!c) return;
+  const { rows, open, close } = cLedRows(), per = !!(LF || LT), asc = rows.slice().reverse();
+  const list = [...(per || open ? [R(LF ? fd(LF) : "", "<b>Opening balance (pichla baaki)</b>", "", "", `<b>${m(open)}</b>`)] : []), ...asc.map(x => R(fd(x.d), h(x.t), x.dr ? `<span class="r">${m(x.dr)}</span>` : "", x.cr ? `<span class="g">${m(x.cr)}</span>` : "", m(x.b))), RC("tt", "", "Total", `<span class="r">${m(sumR(rows, "dr"))}</span>`, `<span class="g">${m(sumR(rows, "cr"))}</span>`, m(close))];
+  const sub = h(c.phone) + " " + h(c.addr) + (per ? " | Statement: " + (LF ? fd(LF) : "shuru") + " se " + (LT ? fd(LT) : "aaj") + " tak" : "");
+  printDoc("Customer ledger: " + h(c.name), sub, ["Date", "Detail", "Charge", "Paid", "Balance"], list, `Closing balance${LT ? " (" + fd(LT) + " tak)" : ""}: <b>${m(close)}</b> (${balLbl(close)})` + (per && r2(close - cbal(L)) ? `<br>Maujooda kul balance: <b>${m(cbal(L))}</b>` : ""), "Ledger-" + c.name);
+}
+function printParty(){
+  const p = D.parties.find(x => x.id === P); if (!p) return;
+  const { rows, open, close } = pLedRows(), per = !!(PLF || PLT), asc = rows.slice().reverse();
+  const list = [...(per ? [R(PLF ? fd(PLF) : "", "<b>Opening balance (pichla baaki)</b>", "", "", `<b>${m(open)}</b>`)] : []), ...asc.map(t => R(fd(t.d), h(t.note), t.kind === "due" ? `<span class="r">${m(t.amt)}</span>` : "", t.kind === "paid" ? `<span class="g">${m(t.amt)}</span>` : "", m(t.b))), RC("tt", "", "Total", `<span class="r">${m(lsum(rows, "due"))}</span>`, `<span class="g">${m(lsum(rows, "paid"))}</span>`, m(close))];
+  printDoc("Lender ledger: " + h(p.name), "Type: " + h(p.type) + (p.closed ? " | Account closed" + (p.closedOn ? " (" + fd(p.closedOn) + ")" : "") : "") + (per ? " | Statement: " + (PLF ? fd(PLF) : "shuru") + " se " + (PLT ? fd(PLT) : "aaj") + " tak" : ""), ["Date", "Note", "Due (dena hai)", "Paid (diya)", "Baaki"], list, `Closing baaki dena: <b>${m(close)}</b>` + (per && r2(close - pbal(P)) ? `<br>Maujooda kul baaki: <b>${m(pbal(P))}</b>` : ""), "Lender-" + p.name);
+}
+function pLedRows(){
+  const all = ledRows(P), rows = all.filter(t => (!PLF || t.d >= PLF) && (!PLT || t.d <= PLT)), last = rows[rows.length - 1];
+  const open = last ? r2(last.b - (last.kind === "due" ? last.amt : -last.amt)) : ((PLF && all.find(x => x.d < PLF)) || { b: 0 }).b;
+  return { all, rows, open, close: rows.length ? rows[0].b : open };
+}
+
+const sumR = (rows, k) => r2(rows.reduce((a, x) => a + x[k], 0));
+const lsum = (rows, kind) => r2(rows.filter(t => t.kind === kind).reduce((a, t) => a + t.amt, 0));
+
+/* ---------- customers list: sort + filters ---------- */
+const CF = { n: "", p: "", b: "" };
+let CS = { k: "n", dir: 1 };
+function resetC(){ CQ = ""; Object.keys(CF).forEach(k => CF[k] = ""); CS = { k: "n", dir: 1 }; r(); }
+function custSort(k){ CS = { k, dir: CS.k === k ? -CS.dir : (k === "b" ? -1 : 1) }; cTbl(); }
+function custHead(){
+  const th = (k, l) => `<th style="cursor:pointer" title="Sort karne ke liye click karein" onclick="custSort('${k}')">${l} <span id="cr_${k}"></span></th>`;
+  const fi = (k, ph) => `<th><input class="fi" value="${h(CF[k])}" placeholder="${ph}" oninput="CF.${k}=this.value;cTbl()"></th>`;
+  return `<thead><tr>${MO ? "<th></th>" : ""}${th("n", "Name")}${th("p", "Phone")}${th("b", "Balance")}<th></th><th></th></tr><tr class="fr">${MO ? "<th></th>" : ""}${fi("n", "Filter")}${fi("p", "Filter")}${fi("b", "Jaise >500 ya <0")}<th></th><th></th></tr></thead>`;
+}
+function cTbl(){
+  const q = (CQ || "").toLowerCase();
+  const list = [...(D.sales.some(s => !s.cid) || D.payments.some(p => !p.cid) ? [WALK] : []), ...D.customers].map(c => ({ c, b: cbal(c.id) }));
+  const rs = list.filter(x => (!q || (x.c.name + " " + (x.c.aka || []).join(" ") + " " + x.c.phone).toLowerCase().includes(q)) && (!CF.n || (x.c.name + " " + (x.c.aka || []).join(" ")).toLowerCase().includes(CF.n.toLowerCase())) && (!CF.p || (x.c.phone || "").includes(CF.p)) && numOk(x.b, CF.b));
+  const val = x => CS.k === "n" ? x.c.name.toLowerCase() : CS.k === "p" ? (x.c.phone || "") : x.b;
+  rs.sort((a, b) => { const x = val(a), y = val(b), c = typeof x === "number" ? x - y : String(x).localeCompare(String(y)); return c * CS.dir; });
+  ["n", "p", "b"].forEach(k => { const e = $("cr_" + k); if (e) e.textContent = CS.k === k ? (CS.dir > 0 ? "▲" : "▼") : ""; });
+  cDup(); mBar();
+  $("cinfo").innerHTML = `<p class="m">${rs.length} customers | Lena hai: <b class="r">${m(rs.reduce((a, x) => a + Math.max(0, x.b), 0))}</b> | Advance: <b class="g">${m(-rs.reduce((a, x) => a + Math.min(0, x.b), 0))}</b></p>`;
+  $("cbody").innerHTML = rs.map(x => `<tr>${MO ? `<td>${x.c.id === "W" ? "" : `<input type="checkbox" ${MS.has(x.c.id) ? "checked" : ""} onchange="mSel('${x.c.id}',this.checked)">`}</td>` : ""}<td><button class="lk" onclick="L='${x.c.id}';r()">${h(x.c.name)}</button></td><td>${h(x.c.phone)}</td><td class="nw">${x.b ? `<b class="${balCls(x.b)}">${m(x.b)}</b> <small style="color:var(--m)">${balLbl(x.b)}</small>` : m(0)}</td><td><button class="g2" onclick="L='${x.c.id}';r()">Ledger</button>${x.b > 0 && waNum(x.c.phone) ? ` <button class="g2" title="WhatsApp par payment QR bhejein" onclick="openLedger('${x.c.id}');waRemind()">💬 QR</button>` : ""}</td><td>${x.c.id === "W" ? "" : X("customers", x.c.id)}</td></tr>`).join("") || `<tr><td colspan="${MO ? 6 : 5}" class="e">Koi customer nahi mila</td></tr>`;
+}
+
+/* ---------- password lock ---------- */
+const QS = ["Favourite Colour (pasandida rang)", "First mobile phone ka brand name", "Birth place (janm sthan)"];
+const IDLE_MIN = 10;
+let fails = 0, until = 0, idleT = null;
+const norm = x => String(x || "").toLowerCase().replace(/\s+/g, " ").trim();
+const b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+async function hashPw(txt, saltB64){
+  if (!window.crypto || !crypto.subtle) throw new Error("Is browser mein password support nahi hai. Chrome ya Edge mein kholein.");
+  const salt = saltB64 ? Uint8Array.from(atob(saltB64), c => c.charCodeAt(0)) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(txt), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 150000, hash: "SHA-256" }, key, 256);
+  return { s: b64(salt), h: b64(bits) };
+}
+const checkPw = async txt => !!D.sec && (await hashPw(txt, D.sec.s)).h === D.sec.h;
+const setMsg = t => { const e = $("smsg"); if (e) e.textContent = t; };
+const pwi = id => `<input type="password" id="${id}" autocomplete="off">`;
+function secForm(mode){
+  return `${mode === "change" ? F("Abhi ka password", pwi("spc")) : ""}${F("Naya password (kam se kam 4 akshar)", pwi("sp1"))}${F("Password dobara likhein", pwi("sp2"))}
+  <p class="m">Reset ke sawal (max 3). Jitne sawalon ka jawab bharoge, reset ke samay un sab ke sahi jawab dene honge.</p>
+  ${QS.map((q, i) => F(q, `<input id="sq${i}" autocomplete="off" placeholder="Jawab (khali = ye sawal nahi)">`)).join("")}
+  <p class="m r" id="smsg"></p>`;
+}
+function blocked(){
+  if (fails >= 5 && Date.now() >= until) fails = 0;
+  if (fails >= 5) { setMsg("Bahut galat koshish. " + Math.ceil((until - Date.now()) / 1000) + " second baad try karein."); return true; }
+  return false;
+}
+function fail(){ fails++; if (fails >= 5) until = Date.now() + 60000; setMsg("Galat jawab ya password. Dobara try karein."); }
+function normData(){ (D.sales || []).forEach(x => { x.fee = +x.fee || 0; }); ["sales", "payments", "inv", "jobs"].forEach(k => (D[k] || []).forEach(x => { if (x.cid == null || x.cid === "W") x.cid = ""; })); }
+function afterLoad(){ normData(); $("setup").style.display = "none"; r(); showLock(); }
+function showLock(){
+  $("lock").style.display = "flex"; const bx = $("lockBox");
+  if (!D.sec) { bx.innerHTML = `<h2>Password banayein</h2><p class="m">Pehli baar: data ko surakshit rakhne ke liye password aur reset ke sawal set karein.</p>${secForm("new")}<button class="b" onclick="saveSec('new')">Save karke shuru karein</button>`; return; }
+  bx.innerHTML = `<h2>🔒 Password daalein</h2><p class="m">Data dekhne ke liye password zaroori hai.</p><input type="password" id="lpw" autocomplete="off" placeholder="Password"><p class="m r" id="smsg"></p><button class="b" onclick="doUnlock()">Unlock</button><button class="lk" onclick="showReset()">Password bhool gaye?</button>`;
+  setTimeout(() => { const e = $("lpw"); if (e) e.focus(); }, 50);
+}
+function showReset(){
+  $("lockBox").innerHTML = `<h2>Password reset</h2><p class="m">Neeche ke sabhi sawalon ke sahi jawab dein.</p>${D.sec.qs.map(q => F(QS[q.i], `<input id="ra${q.i}" autocomplete="off">`)).join("")}${F("Naya password", pwi("sp1"))}${F("Naya password dobara", pwi("sp2"))}<p class="m r" id="smsg"></p><button class="b" onclick="doReset()">Password reset karein</button><button class="lk" onclick="showLock()">Wapas</button>`;
+}
+function unlockOk(){ $("lock").style.display = "none"; $("lockBox").innerHTML = ""; fails = 0; idleReset(); r(); autoDue(); }
+async function doUnlock(){
+  if (blocked()) return;
+  try { if (await checkPw(v("lpw"))) unlockOk(); else fail(); } catch (e) { setMsg(e.message); }
+}
+async function doReset(){
+  if (blocked()) return;
+  try {
+    for (const q of D.sec.qs) { const x = await hashPw(norm(v("ra" + q.i)), q.s); if (x.h !== q.h) return fail(); }
+    const pw = v("sp1"); if (pw.length < 4) return setMsg("Password kam se kam 4 akshar ka rakhein."); if (pw !== v("sp2")) return setMsg("Dono password match nahi karte.");
+    const p = await hashPw(pw); D.sec = { ...D.sec, s: p.s, h: p.h }; save(); unlockOk();
+  } catch (e) { setMsg(e.message); }
+}
+async function saveSec(mode){
+  try {
+    if (mode === "change" && !(await checkPw(v("spc")))) return setMsg("Abhi ka password galat hai.");
+    const pw = v("sp1"); if (pw.length < 4) return setMsg("Password kam se kam 4 akshar ka rakhein."); if (pw !== v("sp2")) return setMsg("Dono password match nahi karte.");
+    const qs = []; for (let i = 0; i < 3; i++) { const a = norm(v("sq" + i)); if (a) { const x = await hashPw(a); qs.push({ i, s: x.s, h: x.h }); } }
+    if (!qs.length) return setMsg("Kam se kam ek sawal ka jawab bharein.");
+    const p = await hashPw(pw); D.sec = { s: p.s, h: p.h, qs }; save();
+    if (mode === "new") unlockOk(); else { alert("Password aur sawal save ho gaye."); r(); }
+  } catch (e) { setMsg(e.message); }
+}
+function lockNow(){ closeEd(); waClose(); showLock(); }
+function idleReset(){ clearTimeout(idleT); if (D.sec && $("lock").style.display === "none") idleT = setTimeout(lockNow, IDLE_MIN * 6e4); }
+["mousemove", "keydown", "click", "touchstart"].forEach(e => document.addEventListener(e, idleReset));
+setInterval(autoDue, 36e5);
+
+/* ---------- customer type-ahead (daily sales form) ---------- */
+const CB = {};
+const cbS = p => CB[p] = CB[p] || { items: [], idx: 0, q: "", next: p === "rc" ? "rs" : p === "jc" ? "js" : "ss" };
+const cbHtml = (p, label, id = "", name = "Walk-in") => `<div style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--m)">${label}<div class="cb"><input type="text" id="${p}n" autocomplete="off" value="${h(name)}" onfocus="cbOpen('${p}')" oninput="cbType('${p}')" onkeydown="cbKey('${p}',event)" onblur="cbBlur('${p}')"><input type="hidden" id="${p}" value="${h(id)}"><div id="${p}l" class="cbl"></div></div><div id="${p}b"></div></div>`;
+function pendMap(){
+  const out = {}, g = {};
+  D.sales.forEach(s => (g[s.cid] = g[s.cid] || []).push(s));
+  for (const cid in g) {
+    let pool = D.payments.filter(p => p.cid === cid).reduce((a, p) => a + p.amt, 0);
+    g[cid].sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)).forEach(s => { let pe = s.amt - s.rec; pe = r2(pe); if (pe > 0 && pool > 0) { const t = Math.min(pe, pool); pe = r2(pe - t); pool = r2(pool - t); } out[s.id] = pe; });
+  }
+  return out;
+}
+function cbSelName(p){ const id = v(p), c = id && D.customers.find(x => x.id === id); return c ? c.name : "Walk-in"; }
+function cbList(p, q){
+  q = q.trim().toLowerCase();
+  const all = [{ id: "", name: "Walk-in", phone: "" }, ...D.customers], a = [], b = [];
+  all.forEach(c => { const n = c.name.toLowerCase(); if (!q || n.startsWith(q)) a.push(c); else if (n.includes(q) || (c.phone || "").includes(q) || (c.aka || []).some(x => x.toLowerCase().includes(q))) b.push(c); });
+  const out = [...a, ...b].slice(0, 300);
+  if (q && !all.some(c => c.name.trim().toLowerCase() === q)) out.push({ add: true, name: $(p + "n").value.trim() });
+  return out;
+}
+function cbRender(p){
+  const s = cbS(p); s.items = cbList(p, s.q); if (s.idx >= s.items.length) s.idx = 0;
+  const l = $(p + "l");
+  l.innerHTML = s.items.map((c, i) => { const bl = c.add ? 0 : cbal(c.id || "W"); return `<div class="${i === s.idx ? "on" : ""}" onmousedown="cbPick('${p}',${i},event)">${c.add ? "➕ Naya customer jodein: <b>" + h(c.name) + "</b>" : h(c.name) + (c.phone ? `<small>${h(c.phone)}</small>` : "") + (bl > 0 ? `<small class="r">lena hai ${m(bl)}</small>` : "")}</div>`; }).join("");
+  l.style.display = "block";
+  const on = l.querySelector ? l.querySelector(".on") : null; if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest" });
+}
+function cbOpen(p){ const e = $(p + "n"); if (e.select) e.select(); const s = cbS(p); s.q = ""; s.idx = 0; cbRender(p); }
+function cbType(p){ const s = cbS(p); s.q = $(p + "n").value; s.idx = 0; cbRender(p); }
+function cbKey(p, e){
+  const s = cbS(p), open = $(p + "l").style.display === "block", n = s.items.length;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (!open) { cbRender(p); return; } s.idx = (s.idx + (e.key === "ArrowDown" ? 1 : -1) + n) % n; cbRender(p); }
+  else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (open && n) cbPick(p, s.idx); else { const nx = $(s.next); if (nx) nx.focus(); } }
+  else if (e.key === "Escape") { $(p + "l").style.display = "none"; $(p + "n").value = cbSelName(p); }
+  else if (e.key === "Tab" && open && s.q && n) cbPick(p, s.idx, null, true);
+}
+function cbPick(p, i, e, nf){
+  if (e) e.preventDefault();
+  const s = cbS(p); let c = s.items[i]; if (!c) return;
+  if (c.add) { const ex = D.customers.find(x => norm(x.name) === norm(c.name)); if (ex) c = ex; else if (nameTaken(c.name)) return alert("Ye naam use nahi ho sakta."); else { c = { id: uid(), name: c.name.trim(), phone: "", addr: "" }; D.customers.push(c); save(); } }
+  $(p).value = c.id; $(p + "n").value = c.name; $(p + "l").style.display = "none"; cbBadge(p);
+  if (p === "rc") { rcWalk(); rcPicked(); }
+  if (p === "jc") jcPicked();
+  if (!nf) { const nx = $(s.next); if (nx) nx.focus(); }
+}
+function cbBlur(p){ setTimeout(() => { const e = $(p + "n"); if (e) { $(p + "l").style.display = "none"; e.value = cbSelName(p); } }, 120); }
+
+/* ---------- GST helpers ---------- */
+const STATES = [["01","Jammu & Kashmir"],["02","Himachal Pradesh"],["03","Punjab"],["04","Chandigarh"],["05","Uttarakhand"],["06","Haryana"],["07","Delhi"],["08","Rajasthan"],["09","Uttar Pradesh"],["10","Bihar"],["11","Sikkim"],["12","Arunachal Pradesh"],["13","Nagaland"],["14","Manipur"],["15","Mizoram"],["16","Tripura"],["17","Meghalaya"],["18","Assam"],["19","West Bengal"],["20","Jharkhand"],["21","Odisha"],["22","Chhattisgarh"],["23","Madhya Pradesh"],["24","Gujarat"],["26","Dadra & Nagar Haveli and Daman & Diu"],["27","Maharashtra"],["29","Karnataka"],["30","Goa"],["31","Lakshadweep"],["32","Kerala"],["33","Tamil Nadu"],["34","Puducherry"],["35","Andaman & Nicobar"],["36","Telangana"],["37","Andhra Pradesh"],["38","Ladakh"]];
+const stName = c => (STATES.find(x => x[0] === c) || [0, c])[1];
+const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+const gstOnFor = d => !!D.gst.on && !!D.gst.from && d >= D.gst.from;
+const svcRate = svc => D.gst.rates && D.gst.rates[svc] != null && D.gst.rates[svc] !== "" ? +D.gst.rates[svc] : +D.gst.rate;
+const svcSac = svc => (D.gst.sac && D.gst.sac[svc]) || D.gst.defSac;
+const fyShort = d => { const a = fyOf(d); return a + "-" + String(a + 1).slice(2); };
+function nextNo(kind, d){ const k = kind + "/" + fyShort(d); D.seq[k] = (D.seq[k] || 0) + 1; return k + "/" + String(D.seq[k]).padStart(4, "0"); }
+function calcLine(entered, rate, incl, intra, on){
+  entered = r2(entered);
+  if (!on || !rate) return { taxable: entered, cgst: 0, sgst: 0, igst: 0, tax: 0, total: entered, rate: 0 };
+  let taxable, tax, total;
+  if (incl) { total = entered; taxable = r2(total / (1 + rate / 100)); tax = r2(total - taxable); }
+  else { taxable = entered; tax = r2(taxable * rate / 100); total = r2(taxable + tax); }
+  const half = r2(tax / 2);
+  return intra ? { taxable, cgst: half, sgst: r2(tax - half), igst: 0, tax, total, rate } : { taxable, cgst: 0, sgst: 0, igst: tax, tax, total, rate };
+}
+function words(n){
+  n = Math.round(n * 100) / 100; const rs = Math.floor(n), ps = Math.round((n - rs) * 100);
+  const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"], b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  const two = x => x < 20 ? a[x] : b[Math.floor(x / 10)] + (x % 10 ? " " + a[x % 10] : "");
+  const three = x => (x >= 100 ? a[Math.floor(x / 100)] + " Hundred" + (x % 100 ? " " : "") : "") + (x % 100 ? two(x % 100) : "");
+  const conv = x => { if (!x) return "Zero"; const q = [], cr = Math.floor(x / 1e7), la = Math.floor(x / 1e5) % 100, th = Math.floor(x / 1e3) % 100, rest = x % 1000; if (cr) q.push(three(cr) + " Crore"); if (la) q.push(two(la) + " Lakh"); if (th) q.push(two(th) + " Thousand"); if (rest) q.push(three(rest)); return q.join(" "); };
+  return "Rupees " + conv(rs) + (ps ? " and " + conv(ps) + " Paise" : "") + " Only";
+}
+
+/* ---------- Receipt / Invoice ---------- */
+let IL = [{ svc: "", rmk: "", amt: "", disc: "", rate: "" }], IS = null, rrAuto = true;
+function iReset(){ IL = [{ svc: "", rmk: "", amt: "", disc: "", rate: "" }]; IS = { gstin: "", pos: D.gst.state, mode: D.gst.mode }; rrAuto = true; }
+let EI = null, TH = "80";
+const invOnFlag = d => EI ? !!(D.inv.find(x => x.id === EI) || {}).on : gstOnFor(d);
+function thSet(x){ TH = x; D.ui = D.ui || { sec: {} }; D.ui.th = x; save(); }
+function vInv(){
+  freshDay();
+  if (!IS) iReset();
+  if (D.ui && D.ui.th) TH = D.ui.th;
+  const e = EI ? D.inv.find(x => x.id === EI) : null, c = e && e.cid ? D.customers.find(x => x.id === e.cid) : null;
+  return `<h2>Receipt / Invoice <span style="font-size:14px;color:var(--m);font-weight:600">${e ? "✎ Edit mode" : gstOnFor(lastD) ? "Tax Invoice (GST ON)" : "Payment Receipt"}</span></h2>
+  <datalist id="sl">${D.svc.map(x => `<option>${h(x)}</option>`).join("")}</datalist>
+  ${e ? `<div class="box" style="border-color:var(--p);background:var(--ps)"><b>✎ ${h(e.no)} ko edit kar rahe ho</b> (number wahi rahega). Niche badlav karke <b>Edit ka kaaran</b> likhna zaroori hai. Daily sales aur customer ledger apne aap sync ho jayenge. <button class="g2" onclick="EI=null;iReset();r()">Edit cancel karein</button></div>` : ""}
+  <div class="box">${e ? "" : `<p class="m">Yahan se banayi entry <b>Daily sales mein bhi apne aap aati hai</b> (aur customer ke ledger mein bhi). Receipt ya invoice print kar sakte ho.</p>`}
+  ${quickBar("i")}<div class="row">${F("Date", `<input type="date" id="rd" value="${e ? e.d : lastD}" onchange="ilRender()">`)}${cbHtml("rc", "Customer (naam likhein ya chunein)", e ? e.cid : "", e ? (c ? c.name : "Walk-in") : "Walk-in")}</div>
+  <div class="row" id="rwalk" style="margin-top:10px">${F("Customer ka naam *", `<input id="rwn" value="${h(e && !e.cid ? e.cname : "")}" style="width:230px">`)}${F("Mobile", `<input id="rwp" value="${h(e && !e.cid ? e.cphone : "")}" style="width:150px">`)}${F("Address *", `<input id="rwa" value="${h(e && !e.cid ? e.caddr : "")}" style="width:340px">`)}</div>
+  <div id="rgst"></div><div id="rlines" style="margin:12px 0"></div>
+  <div class="row">${F("Received (₹)", `<input type="text" inputmode="decimal" class="amt" id="rr" value="${e ? e.rec : ""}" style="width:130px" oninput="rrAuto=false">`)}${F("Mode", `<select id="rpm"><option${e && e.pmode === "UPI" ? "" : " selected"}>Cash</option><option${e && e.pmode === "UPI" ? " selected" : ""}>UPI</option></select>`)}${F("Note (receipt par)", `<input id="rn" value="${h(e ? e.note : "")}" style="width:260px">`)}${e ? F("Edit ka kaaran / Badlav ka reason *", `<input id="rer" style="width:340px" placeholder="Jaise: amount galat bhara tha">`) : ""}</div>
+  <div id="rtot"></div>
+  <div class="row" style="margin-top:12px">${e ? `<button class="b" onclick="saveInv(false)">Update invoice</button><button class="b" onclick="saveInv('a4')">Update + Print A4</button><button class="b" onclick="saveInv('th')">Update + Thermal</button>` : `<button class="b" onclick="saveInv(false)">Save</button><button class="b" onclick="saveInv('a4')">Save + Print A4</button><button class="b" onclick="saveInv('th')">Save + Thermal (${TH} mm)</button>`}</div></div>
+  <div class="box"><div class="row">${F("Search (number, naam, amount)", `<input id="iq" oninput="iTbl()" style="width:280px">`)}${F("Thermal paper", `<select onchange="thSet(this.value)"><option value="80"${TH === "80" ? " selected" : ""}>80 mm</option><option value="58"${TH === "58" ? " selected" : ""}>58 mm</option></select>`)}${F("From", `<input type="date" id="idf" onchange="iTbl()">`)}${F("To", `<input type="date" id="idt" onchange="iTbl()">`)}${dBtns("idf", "idt", "iTbl")}<button class="g2" onclick="clrI()">Clear all filters</button></div><div id="itbl"></div></div>`;
+}
+function editInv(id){
+  const i = D.inv.find(x => x.id === id); if (!i || i.canc) return;
+  EI = id;
+  IL = i.lines.map(l => ({ svc: l.svc, rmk: l.rmk || "", amt: String(l.gross != null ? l.gross : (i.incl || !i.on ? l.total : l.taxable)), disc: l.dtxt || "", rate: i.on && l.rate ? String(l.rate) : "" }));
+  IS = { gstin: i.gstin || "", pos: i.pos || D.gst.state, mode: i.incl ? "incl" : "excl" }; rrAuto = false;
+  V = "inv"; r(); window.scrollTo && window.scrollTo(0, 0);
+}
+function rcPicked(){ const c = D.customers.find(x => x.id === v("rc")); if (c && IS) { IS.gstin = c.gstin || ""; ilRender(); } }
+function rcWalk(){ const e = $("rwalk"); if (e) e.style.display = v("rc") ? "none" : "flex"; }
+function ilRender(){
+  const d = v("rd") || lastD, on = invOnFlag(d);
+  $("rgst").innerHTML = on ? `<div class="row" style="margin-top:10px">${F("Customer ka GSTIN (B2B ho to)", `<input id="rg" value="${h(IS.gstin)}" maxlength="15" style="width:190px;text-transform:uppercase" oninput="IS.gstin=this.value.toUpperCase();ilTot()">`)}${F("Place of supply (state)", `<select id="rp" onchange="IS.pos=this.value;ilTot()">${STATES.map(([c, n]) => `<option value="${c}"${c === IS.pos ? " selected" : ""}>${c} - ${n}</option>`).join("")}</select>`)}${F("Amount mein GST", `<select id="rm" onchange="IS.mode=this.value;ilTot()"><option value="incl"${IS.mode === "incl" ? " selected" : ""}>Shamil hai (inclusive)</option><option value="excl"${IS.mode === "excl" ? " selected" : ""}>Upar se jodein (exclusive)</option></select>`)}</div>` : `<p class="m">${D.gst.on ? "Is tareekh par GST lagu nahi hai" : "GST band hai"}: sirf Payment Receipt banegi.</p>`;
+  $("rlines").innerHTML = `<div class="w"><table><tr><th>Service</th><th>Description / Remark</th><th>Amount</th><th>Discount (10% ya ₹50)</th>${on ? "<th>GST %</th>" : ""}<th></th></tr>${IL.map((l, i) => `<tr><td><input${i === 0 ? ' id="rs"' : ""} list="sl" value="${h(l.svc)}" style="width:210px" oninput="IL[${i}].svc=this.value;ilTot()"></td><td><input value="${h(l.rmk)}" style="width:100%;min-width:220px" oninput="IL[${i}].rmk=this.value"></td><td><input type="text" inputmode="decimal" class="amt" value="${h(l.amt)}" style="width:110px" oninput="IL[${i}].amt=this.value;ilTot()"></td><td><input type="text" value="${h(l.disc)}" placeholder="0" style="width:120px" oninput="IL[${i}].disc=this.value;ilTot()"></td>${on ? `<td><input type="number" min="0" step="0.01" value="${h(l.rate)}" placeholder="${h(svcRate(l.svc.trim()))}" style="width:80px" oninput="IL[${i}].rate=this.value;ilTot()"></td>` : ""}<td>${IL.length > 1 ? `<button class="x" onclick="IL.splice(${i},1);ilRender()">✕</button>` : ""}</td></tr>`).join("")}</table></div><button class="g2" style="margin-top:8px" onclick="IL.push({svc:'',rmk:'',amt:'',disc:'',rate:''});ilRender()">+ Line jodein</button>`;
+  ilTot();
+}
+/* discount: "10%" = percent of amount, "50" ya "₹50" = flat rupees */
+function discAmt(txt, base){
+  const t = String(txt == null ? "" : txt).replace(/[₹,\s]/g, "").replace(/^rs\.?/i, ""); if (!t) return 0;
+  const d = t.endsWith("%") ? base * N(t.slice(0, -1)) / 100 : N(t);
+  return Math.max(0, Math.min(r2(d), base));
+}
+function invLines(){
+  const d = v("rd") || lastD, on = invOnFlag(d), intra = IS.pos === D.gst.state, incl = IS.mode === "incl";
+  return IL.filter(l => N(l.amt) > 0).map(l => { const svc = l.svc.trim(), rate = l.rate === "" ? svcRate(svc) : N(l.rate); return { svc, rmk: l.rmk.trim(), sac: svcSac(svc), ...(() => { const gross = r2(N(l.amt)), disc = discAmt(l.disc, gross), pct = String(l.disc || "").replace(/[\s]/g, "").endsWith("%"); return { gross, disc, dtxt: disc ? (pct ? String(l.disc).replace(/\s/g, "") : m(disc)) : "", ...calcLine(r2(gross - disc), rate, incl, intra, on) }; })() }; });
+}
+function ilTot(){
+  const ls = invLines(), T = k => r2(ls.reduce((a, x) => a + x[k], 0)), tot = T("total"), intra = IS.pos === D.gst.state;
+  $("rtot").innerHTML = ls.length ? `<p class="m">${T("tax") ? "Taxable " + m(T("taxable")) + " | GST " + m(T("tax")) + (intra ? " (CGST " + m(T("cgst")) + " + SGST " + m(T("sgst")) + ")" : " (IGST)") + " | " : ""}${T("disc") ? `<span class="g">Discount -${m(T("disc"))}</span> | ` : ""}<b>Kul ${m(tot)}</b></p>` : "";
+  if (rrAuto) $("rr").value = tot || "";
+}
+function saveInv(pr){
+  const old = EI ? D.inv.find(x => x.id === EI) : null;
+  const d = v("rd") || today(), on = old ? old.on : gstOnFor(d), ls = invLines();
+  if (need(ls.length && ls.every(l => l.svc), "Har line mein service aur amount bharein.")) return;
+  if (old && need(v("rer").trim(), "Edit ka kaaran (reason) likhna zaroori hai.")) return;
+  const c = v("rc") && D.customers.find(x => x.id === v("rc"));
+  let nm, ad, ph;
+  if (c) { nm = c.name; ad = c.addr || ""; ph = c.phone || ""; }
+  else { nm = v("rwn").trim(); ad = v("rwa").trim(); ph = v("rwp").trim(); if (need(nm && ad, "Walk-in customer ka naam aur address bharein (receipt par chhapega).")) return; }
+  const gstin = on ? (IS.gstin || "").trim().toUpperCase() : "";
+  if (gstin && !GSTIN_RE.test(gstin) && !confirm("GSTIN ka format sahi nahi lag raha. Phir bhi save karein?")) return;
+  if (c && gstin && !c.gstin && confirm("Is customer ke master mein GSTIN save kar dein? (agli baar apne aap aa jayega)")) c.gstin = gstin;
+  const total = r2(ls.reduce((a, l) => a + l.total, 0)), rec = Math.max(0, Math.min(N(v("rr")), total)), pm = v("rpm");
+  if (need(total > 0, "Discount ke baad kul amount 0 ho gaya. Discount kam karein.")) return;
+  if (N(v("rr")) > total && !confirm("Received (" + m(N(v("rr"))) + ") kul amount (" + m(total) + ") se zyada hai. Sirf " + m(total) + " record hoga. Aage badhein?")) return;
+  const rmkOf = (l, no) => { const rm = [l.rmk, l.disc ? "Discount " + l.dtxt + " (-" + m(l.disc) + ")" : ""].filter(Boolean).join(" | "); return (rm + (c ? "" : (rm ? " | " : "") + nm + (ph ? " " + ph : "")) + " [" + no + "]").trim(); };
+  let id, no;
+  if (old) {
+    id = old.id; no = old.no; const prev = old.total, base = uid(), olds = old.sids.map(x => D.sales.find(s => s.id === x)), sids = []; let left = rec;
+    ls.forEach((l, k) => {
+      const part = Math.min(left, l.total); left = r2(left - part);
+      const row = { d, svc: l.svc, rmk: rmkOf(l, no), amt: l.total, rec: part, cid: c ? c.id : "", mode: pm, invId: id, gst: l.tax };
+      if (olds[k]) { Object.assign(olds[k], row); sids.push(olds[k].id); } else { const sid = base + String(k).padStart(2, "0"); D.sales.push({ id: sid, ...row }); sids.push(sid); }
+      if (!D.svc.includes(l.svc)) D.svc.push(l.svc);
+    });
+    old.sids.slice(ls.length).forEach(x => { D.sales = D.sales.filter(s => s.id !== x); });
+    const at = new Date().toISOString(), why = v("rer").trim();
+    Object.assign(old, { d, cid: c ? c.id : "", cname: nm, caddr: ad, cphone: ph, gstin, pos: IS.pos, incl: IS.mode === "incl", lines: ls, sids, total, rec, pmode: pm, note: v("rn"), editedOn: at, editReason: why, previousTotal: prev });
+    old.edits = [...(old.edits || []), { on: at, reason: why, prevTotal: prev, newTotal: total }];
+    EI = null;
+  } else {
+    const kind = on ? "INV" : "RC"; no = nextNo(kind, d); id = uid(); const base = uid(), sids = []; let left = rec;
+    ls.forEach((l, k) => {
+      const part = Math.min(left, l.total); left = r2(left - part); const sid = base + String(k).padStart(2, "0"); sids.push(sid);
+      D.sales.push({ id: sid, d, svc: l.svc, rmk: rmkOf(l, no), amt: l.total, rec: part, cid: c ? c.id : "", mode: pm, invId: id, gst: l.tax });
+      if (!D.svc.includes(l.svc)) D.svc.push(l.svc);
+    });
+    D.inv.push({ id, no, kind, on, d, cid: c ? c.id : "", cname: nm, caddr: ad, cphone: ph, gstin, pos: IS.pos, incl: IS.mode === "incl", lines: ls, sids, total, rec, pmode: pm, note: v("rn"), canc: false });
+  }
+  lastD = d; if (FY !== "all" && fyOf(d) !== FY) FY = fyOf(d);
+  iReset(); save(); r(); if (pr) printInv(id, pr === "th" ? TH : "a4");
+}
+function clrI(){ ["iq", "idf", "idt"].forEach(i => { $(i).value = ""; }); iTbl(); }
+function iTbl(){
+  const q = v("iq").toLowerCase(), f = v("idf"), t = v("idt");
+  const rs = D.inv.filter(i => inFY(i.d) && (!f || i.d >= f) && (!t || i.d <= t) && (!q || [i.no, i.cname, i.total, fd(i.d)].join(" ").toLowerCase().includes(q))).sort((a, b) => b.d.localeCompare(a.d) || b.id.localeCompare(a.id));
+  const live = rs.filter(i => !i.canc);
+  $("itbl").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${live.length} receipt/invoice | Kul ${m(live.reduce((a, i) => a + i.total, 0))} | Baaki ${m(live.reduce((a, i) => a + i.total - i.rec, 0))}</p>` +
+    T(["Number", "Date", "Customer", "Taxable", "GST", "Total", "Received", "Status", ""], rs.map(i => { const tx = r2(i.lines.reduce((a, l) => a + l.taxable, 0)), gs = r2(i.lines.reduce((a, l) => a + l.tax, 0)), due = r2(i.total - i.rec);
+      return RC(i.canc ? "" : due > 0 ? "rd" : "gr", `<b>${h(i.no)}</b>`, fd(i.d), i.cid ? `<button class="lk" onclick="openLedger('${i.cid}')">${h(i.cname)}</button>` : h(i.cname), m(tx), gs ? m(gs) : "-", m(i.total), m(i.rec), (i.canc ? "Cancelled" : due > 0 ? `<b class="r">Baaki ${m(due)}</b>` : `<b class="g">Paid</b>`) + (i.editedOn ? `<br><small title="${h(i.editReason || "")}">✎ Edited ${fd(i.editedOn.slice(0, 10))}</small>` : ""), `<button class="x" style="color:var(--p)" onclick="printInv('${i.id}','a4')">🖨 A4</button> <button class="x" style="color:var(--p)" onclick="printInv('${i.id}',TH)">🧾 Thermal</button> ${i.canc ? "" : `<button class="x" style="color:var(--p)" onclick="editInv('${i.id}')">✎ Edit</button> <button class="x" onclick="cancelInv('${i.id}')">Cancel</button>`}`); }));
+}
+function cancelInv(id){
+  const i = D.inv.find(x => x.id === id); if (!i || i.canc) return;
+  if (!confirm("Ye " + i.no + " cancel hogi. Daily sales aur customer ledger se iski entries hat jayengi. Number wapas nahi aayega. Pakka?")) return;
+  D.sales = D.sales.filter(s => s.invId !== id); i.canc = true; save(); r();
+}
+function printInv(id, mode){
+  const i = D.inv.find(x => x.id === id); if (!i) return; mode = mode || "a4";
+  const g = i.on, title = i.canc ? "CANCELLED" : g ? "TAX INVOICE" : "PAYMENT RECEIPT", sh = D.shop, inter = i.lines.some(l => l.igst);
+  const T_ = k => r2(i.lines.reduce((a, x) => a + x[k], 0)), due = r2(i.total - i.rec), tdisc = r2(i.lines.reduce((a, x) => a + (x.disc || 0), 0)), rev = i.editedOn ? fd(i.editedOn.slice(0, 10)) : "";
+  if (mode === "a4") {
+    const rows = i.lines.map((l, n) => `<tr><td>${n + 1}</td><td>${h(l.svc)}${l.rmk ? `<br><small>${h(l.rmk)}</small>` : ""}${l.disc ? `<br><small>Amount ${m(l.gross)} | Discount ${h(l.dtxt)}: -${m(l.disc)}</small>` : ""}</td>${g ? `<td>${h(l.sac || "")}</td>` : ""}<td class="n">${m(l.taxable)}</td>${g ? `<td class="n">${l.rate}%</td><td class="n">${m(l.tax)}</td>` : ""}<td class="n">${m(l.total)}</td></tr>`).join("");
+    $("pr").innerHTML = `<div class="inv">
+  <div class="ih"><div><h2>${h(sh.name)}</h2><div>${h(sh.addr)}</div>${sh.phone ? `<div>Phone: ${h(sh.phone)}</div>` : ""}${g && D.gst.gstin ? `<div><b>GSTIN: ${h(D.gst.gstin)}</b></div>` : ""}</div><div style="text-align:right"><h2>${title}</h2><div>No: <b>${h(i.no)}</b></div><div>Date: <b>${fd(i.d)}</b></div></div></div>
+  <div class="ib"><b>Customer:</b> ${h(i.cname)}<br>${h(i.caddr)}${i.cphone ? "<br>Mobile: " + h(i.cphone) : ""}${i.gstin ? "<br>GSTIN: " + h(i.gstin) : ""}${g ? `<br>Place of supply: ${h(stName(i.pos))} (${h(i.pos)})` : ""}</div>
+  <table class="it"><tr><th>#</th><th>Description</th>${g ? "<th>HSN/SAC</th>" : ""}<th class="n">${g ? "Taxable value" : "Amount"}</th>${g ? '<th class="n">GST %</th><th class="n">GST</th>' : ""}<th class="n">Total</th></tr>${rows}</table>
+  <div class="itot">${tdisc ? `<div>Discount given: -${m(tdisc)}</div>` : ""}${g ? `<div>Taxable value: ${m(T_("taxable"))}</div>${inter ? `<div>IGST: ${m(T_("igst"))}</div>` : `<div>CGST: ${m(T_("cgst"))}</div><div>SGST: ${m(T_("sgst"))}</div>`}` : ""}<div class="gt">Total: ${m(i.total)}</div><div>Received (${h(i.pmode)}): ${m(i.rec)}</div>${due > 0 ? `<div style="color:#d92d20"><b>Balance due: ${m(due)}</b></div>` : "<div><b>Paid in full</b></div>"}</div>
+  <div class="iw">Amount in words: <b>${words(i.total)}</b></div>${i.note ? `<div style="margin-top:6px">Note: ${h(i.note)}</div>` : ""}${rev ? `<div style="margin-top:6px;font-size:12px">Revised on ${rev} (previous total: ${m(i.previousTotal)})</div>` : ""}
+  <div class="isg"><div>This is a computer generated ${g ? "tax invoice" : "receipt"}.</div><div style="text-align:center">For ${h(sh.name)}<br><br><br>Authorised Signatory</div></div><div class="ty">Thank you for your business!<br><small>Dhanyavaad, phir padharein.</small></div></div>`;
+  } else {
+    $("pr").innerHTML = `<div class="th th${mode}"><div class="tc"><b class="tn">${h(sh.name)}</b><br>${h(sh.addr)}${sh.phone ? "<br>Ph: " + h(sh.phone) : ""}${g && D.gst.gstin ? "<br>GSTIN: " + h(D.gst.gstin) : ""}</div><hr><div class="tc"><b>${title}</b></div><div>No: ${h(i.no)}<br>Date: ${fd(i.d)}</div><div>Cust: ${h(i.cname)}${i.cphone ? " (" + h(i.cphone) + ")" : ""}${i.gstin ? "<br>GSTIN: " + h(i.gstin) : ""}</div><hr>${i.lines.map(l => `<div class="tl"><span>${h(l.svc)}${l.rmk ? " - " + h(l.rmk) : ""}</span><span>${m(l.total)}</span></div>${l.disc ? `<div class="tl ts"><span>Disc ${h(l.dtxt)} on ${m(l.gross)}</span><span>-${m(l.disc)}</span></div>` : ""}${g && l.tax ? `<div class="tl ts"><span>incl. GST ${l.rate}%</span><span>${m(l.tax)}</span></div>` : ""}`).join("")}<hr>${g ? `<div class="tl"><span>Taxable</span><span>${m(T_("taxable"))}</span></div>${inter ? `<div class="tl"><span>IGST</span><span>${m(T_("igst"))}</span></div>` : `<div class="tl"><span>CGST</span><span>${m(T_("cgst"))}</span></div><div class="tl"><span>SGST</span><span>${m(T_("sgst"))}</span></div>`}` : ""}${tdisc ? `<div class="tl"><span>Total discount</span><span>-${m(tdisc)}</span></div>` : ""}<div class="tl tb2"><span>TOTAL</span><span>${m(i.total)}</span></div><div class="tl"><span>Received (${h(i.pmode)})</span><span>${m(i.rec)}</span></div>${due > 0 ? `<div class="tl tb2"><span>BALANCE DUE</span><span>${m(due)}</span></div>` : `<div class="tc"><b>PAID</b></div>`}${rev ? `<div class="ts">Revised ${rev}</div>` : ""}<hr><div class="tc"><b>Thank you for your business!</b><br>Dhanyavaad, phir padharein.</div></div>`;
+  }
+  if (mode !== "a4" && document.head) { const st = document.createElement("style"); st.id = "pgs"; st.textContent = "@page{size:" + mode + "mm auto;margin:2mm}"; document.head.appendChild(st); }
+  const old = document.title; document.title = i.no.replace(/\//g, "-"); window.print(); document.title = old;
+  const x = $("pgs"); if (x && x.parentNode) x.parentNode.removeChild(x);
+}
+
+/* ---------- GST page: settings, reports, returns ---------- */
+let GM = today().slice(0, 7), GSV = [];
+const nfS = s => s.gst && s.amt ? (s.amt - s.gst) / s.amt : 1;
+/* Fees (customer ka kharcha) alag, Service charge = meri income */
+const sFee = s => Math.max(0, Math.min(+s.fee || 0, s.amt));
+const sSvc = s => r2(s.amt - sFee(s));
+const incSale = s => sFee(s) > 0 ? sSvc(s) * nfS(s) : s.rec * nfS(s);
+function payInc(){
+  const out = [], g = {}, pp = {};
+  D.sales.forEach(s => (g[s.cid] = g[s.cid] || []).push(s));
+  D.payments.forEach(p => (pp[p.cid] = pp[p.cid] || []).push({ d: p.d, id: p.id, left: p.amt }));
+  new Set([...Object.keys(g), ...Object.keys(pp)]).forEach(cid => {
+    const ps = (pp[cid] || []).sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)); let i = 0;
+    (g[cid] || []).sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)).forEach(s => {
+      let pe = r2(s.amt - s.rec);
+      while (pe > 0 && i < ps.length) { const t = Math.min(pe, ps[i].left); ps[i].left = r2(ps[i].left - t); pe = r2(pe - t); if (sFee(s) <= 0 && t > 0) out.push({ d: ps[i].d, a: t }); if (ps[i].left <= 0) i++; }
+    });
+    ps.forEach(p => { if (p.left > 0) out.push({ d: p.d, a: p.left }); });
+  });
+  return out;
+}
+const stuckFees = fyOnly => { const pm = pendMap(); return r2(D.sales.filter(s => sFee(s) > 0 && (!fyOnly || inFY(s.d))).reduce((a, s) => a + Math.max(0, (pm[s.id] || 0) - sSvc(s)), 0)); };
+const invOn = () => D.inv.filter(i => !i.canc && i.on);
+const gmonth = d => d.slice(0, 7);
+const isum = (i, k) => r2(i.lines.reduce((a, l) => a + l[k], 0));
+const secd = (k, title, body, def) => `<details class="box dsec" ${uiOp(k, def)} ontoggle="uiSec('${k}',this.open)"><summary>${title}</summary>${body}</details>`;
+function gstMonth(mk){
+  const iv = invOn().filter(i => gmonth(i.d) === mk), sum = k => r2(iv.reduce((a, i) => a + isum(i, k), 0));
+  const itc = r2(D.expenses.filter(e => gmonth(e.d) === mk && e.itc).reduce((a, e) => a + e.itc, 0)), tax = sum("tax");
+  return { iv, taxable: sum("taxable"), cgst: sum("cgst"), sgst: sum("sgst"), igst: sum("igst"), tax, itc, net: r2(tax - itc), total: sum("total") };
+}
+function gMonths(){
+  const st = new Set();
+  if (D.gst.on && D.gst.from) { let [y, mo] = D.gst.from.slice(0, 7).split("-").map(Number); const [cy, cmn] = today().slice(0, 7).split("-").map(Number); while (y < cy || (y === cy && mo <= cmn)) { st.add(y + "-" + String(mo).padStart(2, "0")); mo++; if (mo > 12) { mo = 1; y++; } } }
+  invOn().forEach(i => st.add(gmonth(i.d))); D.gstRet.forEach(x => st.add(x.per));
+  return [...st].sort().reverse();
+}
+const gPaid = mk => r2(D.gstRet.filter(x => x.per === mk && x.form === "GSTR-3B").reduce((a, x) => a + x.igst + x.cgst + x.sgst, 0));
+const gFiled = (mk, f) => D.gstRet.find(x => x.per === mk && x.form === f);
+const gstDue = () => r2(gMonths().reduce((a, mk) => a + gstMonth(mk).net - gPaid(mk), 0));
+const dueD = (mk, day) => { const [y, mo] = mk.split("-").map(Number); return isoD(new Date(y, mo, day)); };
+function gGroups(mk){
+  const x = gstMonth(mk), flat = x.iv.flatMap(i => i.lines.map(l => ({ i, l })));
+  const grp = (arr, keyf, init) => { const o = {}; arr.forEach(z => { const g = o[keyf(z)] = o[keyf(z)] || { ...init(z), n: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 }; g.n++; ["taxable", "cgst", "sgst", "igst", "total"].forEach(k => g[k] = r2(g[k] + z.l[k])); }); return Object.values(o); };
+  return { x, b2b: x.iv.filter(i => i.gstin), b2c: grp(flat.filter(z => !z.i.gstin), z => z.i.pos + "|" + z.l.rate, z => ({ pos: z.i.pos, rate: z.l.rate })), hsn: grp(flat, z => z.l.sac + "|" + z.l.rate, z => ({ sac: z.l.sac, rate: z.l.rate })), canc: D.inv.filter(i => i.canc && i.on && gmonth(i.d) === mk).map(i => i.no) };
+}
+function vGst(){
+  const G = D.gst, noInv = G.on ? D.sales.filter(s => !s.invId && s.d >= G.from) : [];
+  const warn = G.on && noInv.length ? `<div class="box" style="border-color:var(--r)"><b class="r">⚠ GST ON ke baad ki ${noInv.length} sales (${m(noInv.reduce((a, x) => a + x.amt, 0))}) ka invoice nahi bana.</b> Ye GST reports mein nahi ginti jayengi. Customer ko invoice dena ho to Receipt / Invoice page se banayein.</div>` : "";
+  return `<h2>GST <span style="font-size:15px;color:var(--m);font-weight:600">${G.on ? "ON (" + fd(G.from) + " se)" : "OFF (abhi unregistered)"}</span></h2>${warn}
+  ${secd("gs", "⚙️ GST settings", gSettings(), !G.on)}${secd("gr", "Service ke hisaab se GST % aur HSN/SAC", gRates())}${secd("gp", "📄 Reports: GSTR-1 aur GSTR-3B (mahine ke hisaab se)", gReports(), G.on)}${secd("gt", "📅 Tax ka hisaab aur return filing ka record", gReturns(), G.on)}`;
+}
+function gSettings(){
+  const G = D.gst;
+  return `<div class="row">${F("GST chalu karein?", `<select id="go"><option value="0"${G.on ? "" : " selected"}>Nahi (GST band)</option><option value="1"${G.on ? " selected" : ""}>Haan (GST registered)</option></select>`)}${F("GST lagu hone ki tareekh", `<input type="date" id="gf" value="${h(G.from)}">`)}${F("Aapka GSTIN", `<input id="gi" value="${h(G.gstin)}" maxlength="15" style="width:190px;text-transform:uppercase">`)}${F("Aapka state", `<select id="gstate">${STATES.map(([c, n]) => `<option value="${c}"${c === G.state ? " selected" : ""}>${c} - ${n}</option>`).join("")}</select>`)}</div>
+  <div class="row" style="margin-top:10px">${F("Default GST %", `<input type="number" id="grate" min="0" step="0.01" value="${G.rate}" style="width:100px">`)}${F("Amount mein GST (default)", `<select id="gmode"><option value="incl"${G.mode === "incl" ? " selected" : ""}>Shamil hai (inclusive)</option><option value="excl"${G.mode === "excl" ? " selected" : ""}>Upar se jodein (exclusive)</option></select>`)}${F("Default HSN/SAC", `<input id="gsac" value="${h(G.defSac)}" style="width:120px">`)}<button class="b" onclick="saveGst()">Save</button></div>
+  <p class="m">GST ki tareekh se <b>pehle ki entries aur bina invoice wali Daily sales GST mein nahi ginti jayengi.</b> Sirf us tareekh ke baad bane Tax Invoice GST reports mein aate hain. Rate aur HSN/SAC ki sahi jaankari CA se pakki kar lein; yahan sab badla ja sakta hai.</p>`;
+}
+function saveGst(){
+  const on = v("go") === "1", gi = v("gi").trim().toUpperCase();
+  if (on && !v("gf")) return alert("GST lagu hone ki tareekh bharein.");
+  if (on && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gi) && !confirm("GSTIN ka format sahi nahi lag raha. Phir bhi save karein?")) return;
+  D.gst = { ...D.gst, on, from: v("gf"), gstin: gi, state: v("gstate"), rate: N(v("grate")), mode: v("gmode"), defSac: v("gsac").trim() || "998599" };
+  save(); alert("GST settings save ho gayi."); r();
+}
+function gRates(){
+  GSV = [...new Set(D.svc)].sort();
+  return `<p class="m">Khali chhodein to default rate (${D.gst.rate}%) aur default SAC lagega. Invoice banate samay har line mein rate badal bhi sakte ho.</p>${T(["Service", "GST %", "HSN/SAC"], GSV.map((x, i) => R(h(x), `<input type="number" min="0" step="0.01" value="${h(D.gst.rates[x] ?? "")}" placeholder="${D.gst.rate}" style="width:90px" onchange="gSet('rates',${i},this.value)">`, `<input value="${h(D.gst.sac[x] || "")}" placeholder="${h(D.gst.defSac)}" style="width:120px" onchange="gSet('sac',${i},this.value)">`)))}`;
+}
+function gSet(kind, i, val){ const x = GSV[i]; if (val === "") delete D.gst[kind][x]; else D.gst[kind][x] = kind === "rates" ? +val : val.trim(); save(); }
+function gReports(){
+  const { x, b2b, b2c, hsn, canc } = gGroups(GM);
+  const cards = [["Invoices", x.iv.length], ["Taxable value", m(x.taxable)], ["CGST", m(x.cgst)], ["SGST", m(x.sgst)], ["IGST", m(x.igst)], ["Kul GST (output)", m(x.tax)], ["ITC (kharid par GST)", m(x.itc)], ["Net bharna hai", m(x.net)]];
+  return `<div class="row" style="margin-bottom:12px">${F("Mahina", `<input type="month" id="gm" value="${GM}" onchange="GM=this.value;r()">`)}<button class="g2" onclick="gstXl()">Excel mein download (GSTR-1 / 3B)</button></div>
+  <div class="cards">${cards.map(c => `<div class="c"><small>${c[0]}</small><b>${c[1]}</b></div>`).join("")}</div>
+  <h3>GSTR-1: B2B (customer ke GSTIN wale)</h3>${T(["GSTIN", "Invoice", "Date", "Customer", "State", "Taxable", "CGST", "SGST", "IGST", "Total"], b2b.map(i => R(h(i.gstin), h(i.no), fd(i.d), h(i.cname), h(i.pos), m(isum(i, "taxable")), m(isum(i, "cgst")), m(isum(i, "sgst")), m(isum(i, "igst")), m(i.total))))}
+  <h3 style="margin-top:14px">GSTR-1: B2C (bina GSTIN) rate aur state ke hisaab se</h3>${T(["State", "Rate", "Lines", "Taxable", "CGST", "SGST", "IGST", "Total"], b2c.map(g => R(g.pos + " - " + h(stName(g.pos)), g.rate + "%", g.n, m(g.taxable), m(g.cgst), m(g.sgst), m(g.igst), m(g.total))))}
+  <h3 style="margin-top:14px">GSTR-1: HSN/SAC summary</h3>${T(["HSN/SAC", "Rate", "Lines", "Taxable", "CGST", "SGST", "IGST", "Total"], hsn.map(g => R(h(g.sac), g.rate + "%", g.n, m(g.taxable), m(g.cgst), m(g.sgst), m(g.igst), m(g.total))))}
+  ${canc.length ? `<p class="m">Cancelled invoice (is mahine): ${h(canc.join(", "))}</p>` : ""}
+  <h3 style="margin-top:14px">GSTR-3B ka saar</h3>${T(["Detail", "Taxable", "IGST", "CGST", "SGST"], [R("3.1(a) Outward taxable supplies", m(x.taxable), m(x.igst), m(x.cgst), m(x.sgst)), R("4(A) ITC (kharid par GST, kul)", "", "", m(x.itc), ""), R("<b>Net tax bharna hai (output - ITC)</b>", "", "", `<b>${m(x.net)}</b>`, "")])}
+  <p class="m">Ye saar aapki entries se bana hai, return file karne se pehle portal ke figures aur CA se milan zaroor karein. ITC abhi kul ek amount ke roop mein ginta hai (head-wise nahi).</p>`;
+}
+function gstXl(){
+  const XL = window.XLSX || xmlShim;
+  const { x, b2b, b2c, hsn } = gGroups(GM), wb = XL.utils.book_new(), add = (n, a) => XL.utils.book_append_sheet(wb, XL.utils.json_to_sheet(a.length ? a : [{}]), n);
+  add("B2B", b2b.map(i => ({ GSTIN: i.gstin, Invoice: i.no, Date: i.d, Customer: i.cname, POS: i.pos, Taxable: isum(i, "taxable"), CGST: isum(i, "cgst"), SGST: isum(i, "sgst"), IGST: isum(i, "igst"), Total: i.total })));
+  add("B2C", b2c.map(g => ({ POS: g.pos, Rate: g.rate, Lines: g.n, Taxable: g.taxable, CGST: g.cgst, SGST: g.sgst, IGST: g.igst, Total: g.total })));
+  add("HSN", hsn.map(g => ({ "HSN/SAC": g.sac, Rate: g.rate, Lines: g.n, Taxable: g.taxable, CGST: g.cgst, SGST: g.sgst, IGST: g.igst, Total: g.total })));
+  add("GSTR-3B", [{ Taxable: x.taxable, IGST: x.igst, CGST: x.cgst, SGST: x.sgst, "ITC": x.itc, "Net payable": x.net }]);
+  add("Invoices", x.iv.flatMap(i => i.lines.map(l => ({ No: i.no, Date: i.d, Customer: i.cname, GSTIN: i.gstin, POS: i.pos, Service: l.svc, SAC: l.sac, Discount: l.disc || 0, Taxable: l.taxable, Rate: l.rate, CGST: l.cgst, SGST: l.sgst, IGST: l.igst, Total: l.total }))));
+  XL.writeFile(wb, "GST-" + GM + ".xlsx");
+}
+function gReturns(){
+  const ms = gMonths(), odue = (mk, day, f) => { const fl = gFiled(mk, f), dd = dueD(mk, day); return fl ? `<b class="g">✓ ${fd(fl.d)}</b>` : `<span class="${today() > dd ? "r" : ""}">${today() > dd ? "⚠ Overdue " : "Due "}${fd(dd)}</span>`; };
+  const rows = ms.map(mk => { const x = gstMonth(mk), pd = gPaid(mk), bk = r2(x.net - pd); return RC(bk > 0.5 ? "rd" : x.iv.length || pd ? "gr" : "", mlabel(mk), x.iv.length, m(x.taxable), m(x.tax), m(x.itc), m(x.net), m(pd), bk > 0.5 ? `<b class="r">${m(bk)}</b>` : `<b class="g">${m(bk)}</b>`, odue(mk, 11, "GSTR-1"), odue(mk, 20, "GSTR-3B")); });
+  const pm = new Date(); pm.setMonth(pm.getMonth() - 1); const defPer = isoD(pm).slice(0, 7);
+  return `<div class="cards"><div class="c"><small>Kul GST baaki (bharna hai)</small><b class="${gstDue() > 0 ? "r" : "g"}">${m(gstDue())}</b></div></div>
+  ${T(["Mahina", "Invoices", "Taxable", "Output tax", "ITC", "Net payable", "Bhara", "Baaki", "GSTR-1", "GSTR-3B"], rows)}
+  <p class="m">Due date monthly filing (GSTR-1: 11 tareekh, GSTR-3B: 20 tareekh) ke hisaab se dikhayi hai. QRMP ya alag niyam ho to CA se confirm karein.</p>
+  <h3 style="margin-top:14px">Return bhar diya? Yahan entry karein</h3>
+  <div class="row">${F("Kis mahine ka", `<input type="month" id="tp" value="${defPer}">`)}${F("Form", `<select id="tf"><option>GSTR-3B</option><option>GSTR-1</option><option>Other</option></select>`)}${F("Filing ki tareekh", `<input type="date" id="tdt" value="${today()}">`)}${F("ARN / Ack no", `<input id="tar" style="width:170px">`)}</div>
+  <div class="row" style="margin-top:10px">${F("IGST bhara (cash)", `<input type="text" inputmode="decimal" class="amt" id="tig" style="width:110px">`)}${F("CGST bhara (cash)", `<input type="text" inputmode="decimal" class="amt" id="tcg" style="width:110px">`)}${F("SGST bhara (cash)", `<input type="text" inputmode="decimal" class="amt" id="tsg" style="width:110px">`)}${F("Interest", `<input type="text" inputmode="decimal" class="amt" id="tin" style="width:90px">`)}${F("Late fee", `<input type="text" inputmode="decimal" class="amt" id="tfe" style="width:90px">`)}${F("Note", `<input id="tno" style="width:200px">`)}<button class="b" onclick="saveRet()">Return entry save karein</button></div>
+  <h3 style="margin-top:14px">Filing ka record</h3>${T(["Mahina", "Form", "Filed on", "ARN", "IGST", "CGST", "SGST", "Interest", "Fee", "Note", ""], D.gstRet.slice().sort((a, b) => b.per.localeCompare(a.per) || b.id.localeCompare(a.id)).map(x => R(mlabel(x.per), x.form, fd(x.d), h(x.arn), m(x.igst), m(x.cgst), m(x.sgst), m(x.int), m(x.fee), h(x.note), X("gstRet", x.id))))}`;
+}
+function saveRet(){
+  if (need(v("tp") && v("tdt"), "Mahina aur filing ki tareekh bharein.")) return;
+  D.gstRet.push({ id: uid(), per: v("tp"), form: v("tf"), d: v("tdt"), arn: v("tar").trim(), igst: N(v("tig")), cgst: N(v("tcg")), sgst: N(v("tsg")), int: N(v("tin")), fee: N(v("tfe")), note: v("tno") });
+  save(); r();
+}
+
+
+/* ---------- no duplicate names + merge customers ---------- */
+const MS = new Set(); let MM = null, MO = false;
+function mToggle(){ MO = !MO; MS.clear(); r(); }
+const nameTaken = (name, exceptId) => norm(name).startsWith("walk-in") || D.customers.some(c => c.id !== exceptId && norm(c.name) === norm(name));
+const cEntries = c => D.sales.filter(s => s.cid === c.id).length + D.payments.filter(p => p.cid === c.id).length;
+function mSel(id, on){ if (on) MS.add(id); else MS.delete(id); mBar(); }
+function mBar(){
+  const e = $("mbar"); if (!e) return;
+  e.innerHTML = !MO ? "" : MS.size ? `<div class="row" style="margin-bottom:10px"><b>${MS.size} customer chune hain</b><button class="b" onclick="mOpen()" ${MS.size < 2 ? "disabled" : ""}>Merge karein</button><button class="g2" onclick="MS.clear();cTbl()">Selection hatayein</button></div>` : `<p class="m">Do ya zyada customers ko ek karne ke liye unke aage tick lagayein.</p>`;
+}
+function cDup(){
+  const e = $("cdup"); if (!e) return;
+  const grp = {}; D.customers.forEach(c => (grp[norm(c.name)] = grp[norm(c.name)] || []).push(c));
+  const dups = Object.values(grp).filter(g => g.length > 1), u = D.lastMerge;
+  const tg = $("mtog"); if (tg) tg.innerHTML = "⇄ Merge" + (dups.length ? ` <span class="r">⚠ ${dups.length}</span>` : "") + (MO ? " ▲" : "");
+  e.innerHTML = !MO ? "" : (dups.length ? `<div class="box" style="border-color:var(--r)"><b class="r">⚠ ${dups.length} naam ek se zyada baar hain:</b> ${dups.map(g => `${h(g[0].name)} (${g.length}) <button class="g2" onclick="mDup('${g.map(c => c.id).join(",")}')">Merge</button>`).join(" &nbsp; ")}</div>` : "")
+    + (u ? `<div class="box">Pichhla merge: <b>${h(u.src.map(o => o.name).join(", "))}</b> → <b>${h((D.customers.find(c => c.id === u.t) || {}).name || "")}</b> <button class="g2" onclick="mUndo()">Undo</button></div>` : "");
+}
+function mDup(str){ MS.clear(); str.split(",").forEach(i => MS.add(i)); MM = null; mOpen(); }
+function mOpen(){
+  const cs = [...MS].map(id => D.customers.find(x => x.id === id)).filter(Boolean);
+  if (cs.length < 2) return alert("Kam se kam 2 customer chunein.");
+  MM = { ids: cs.map(c => c.id), main: MM && cs.some(c => c.id === MM.main) ? MM.main : cs.slice().sort((a, b) => cEntries(b) - cEntries(a))[0].id };
+  mRender();
+}
+function mRender(){
+  const cs = MM.ids.map(id => D.customers.find(x => x.id === id)), main = cs.find(c => c.id === MM.main), others = cs.filter(c => c !== main);
+  const words = c => norm(c.name + " " + (c.aka || []).join(" ")).split(/[^a-z0-9\u0900-\u097f]+/).filter(w => w.length >= 3);
+  const digits = c => (c.phone || "").replace(/\D/g, "").slice(-10);
+  const alien = others.filter(o => !(words(o).some(w => words(main).includes(w)) || (digits(o) && digits(o) === digits(main))));
+  const phones = [...new Set(cs.map(digits).filter(Boolean))];
+  const warn = (alien.length ? `<p style="color:var(--r);font-weight:700">⚠ Naam bilkul alag lag rahe hain: ${alien.map(o => h(o.name)).join(", ")} aur ${h(main.name)}. Dobara dekh lein, galat customer to nahi mila rahe?</p>` : "") + (phones.length > 1 ? `<p style="color:var(--r);font-weight:700">⚠ In customers ke phone number alag hain (${phones.join(", ")}).</p>` : "");
+  const tot = cs.reduce((a, c) => a + cbal(c.id), 0);
+  $("md").innerHTML = `<div class="mb" style="width:min(580px,94vw)"><h3>Customers merge karein</h3><p class="m">Jo customer <b>rahega</b> use chunein. Baaki sab ki saari entries isme aa jayengi:</p>
+  ${cs.map(c => `<label style="flex-direction:row;align-items:center;gap:8px;font-weight:400;color:var(--t);border:1px solid ${c.id === MM.main ? "var(--p)" : "var(--l)"};border-radius:8px;padding:8px"><input type="radio" name="mm" ${c.id === MM.main ? "checked" : ""} onchange="MM.main='${c.id}';mRender()"><span><b>${h(c.name)}</b> ${h(c.phone)}<br><small>${cEntries(c)} entries | balance ${m(cbal(c.id))}</small></span></label>`).join("")}
+  <div class="box" style="background:#f7f9fc;margin:6px 0"><b>Ye hoga:</b><br>${others.map(o => `• <b>${h(o.name)}</b> (${cEntries(o)} entries) → <b>${h(main.name)}</b> mein jud jayega aur "${h(o.name)}" naam list se hat jayega`).join("<br>")}<br>Merge ke baad <b>${h(main.name)}</b> ka balance: <b>${m(tot)}</b></div>${warn}
+  <label style="flex-direction:row;align-items:flex-start;gap:8px;font-weight:600;color:var(--t)"><input type="checkbox" onchange="$('mgo').disabled=!this.checked"> Maine upar ke naam dekh liye. Ye sab ek hi vyakti ya family ke hain aur main sahi customers merge kar raha hoon.</label>
+  <div class="row"><button class="b" id="mgo" disabled onclick="mDo()">Haan, merge karein</button><button class="g2" onclick="closeEd()">Cancel</button></div></div>`;
+  $("md").style.display = "flex";
+}
+function mDo(){
+  const main = D.customers.find(x => x.id === MM.main), others = MM.ids.filter(id => id !== MM.main).map(id => D.customers.find(x => x.id === id)).filter(Boolean);
+  if (!main || !others.length) return;
+  const u = { t: main.id, tb: { phone: main.phone, addr: main.addr, aka: (main.aka || []).slice() }, src: others.map(o => ({ ...o })), s: {}, p: {}, i: {}, j: {} };
+  others.forEach(o => {
+    D.sales.forEach(s => { if (s.cid === o.id) { u.s[s.id] = o.id; s.cid = main.id; } });
+    D.payments.forEach(p => { if (p.cid === o.id) { u.p[p.id] = o.id; p.cid = main.id; } });
+    D.inv.forEach(i => { if (i.cid === o.id) { u.i[i.id] = o.id; i.cid = main.id; } }); D.jobs.forEach(j => { if (j.cid === o.id) { u.j[j.id] = o.id; j.cid = main.id; } });
+    if (!main.phone && o.phone) main.phone = o.phone;
+    if (!main.addr && o.addr) main.addr = o.addr;
+    main.aka = [...new Set([...(main.aka || []), o.name, ...(o.aka || [])])];
+  });
+  const ids = new Set(others.map(o => o.id)); D.customers = D.customers.filter(c => !ids.has(c.id));
+  D.lastMerge = u; MS.clear(); MM = null; closeEd(); save(); r();
+}
+function mUndo(){
+  const u = D.lastMerge, main = u && D.customers.find(x => x.id === u.t); if (!u) return;
+  if (!main) return alert("Undo nahi ho sakta (main customer hat chuka hai).");
+  if (u.src.some(o => D.customers.some(c => c.id !== u.t && norm(c.name) === norm(o.name)))) return alert("Undo nahi ho sakta: koi purana naam ab doosre customer ke paas hai.");
+  if (!confirm("Pichhla merge undo karein? Customers wapas alag ho jayenge.")) return;
+  u.src.forEach(o => D.customers.push(o));
+  D.sales.forEach(s => { if (u.s[s.id]) s.cid = u.s[s.id]; }); D.payments.forEach(p => { if (u.p[p.id]) p.cid = u.p[p.id]; });
+  D.inv.forEach(i => { if (u.i && u.i[i.id]) i.cid = u.i[i.id]; }); D.jobs.forEach(j => { if (u.j && u.j[j.id]) j.cid = u.j[j.id]; });
+  main.phone = u.tb.phone; main.addr = u.tb.addr; main.aka = u.tb.aka; delete D.lastMerge; save(); r();
+}
+const waNum = x => { const d = String(x || "").replace(/\D/g, ""); const t = d.length >= 10 && d.length <= 13 ? d.slice(-10) : (d.match(/\d{10}/) || [])[0]; return t ? "91" + t : ""; };
+const payNote = (amt) => (D.shop.name || "APNA CSC") + " ko " + m(amt) + " dene the";
+const payNoteUpi = (amt) => ((D.shop.name || "APNA CSC") + " ko Rs " + (Math.round(amt * 100) / 100) + " dene the").slice(0, 50);
+const upiUri = (u, amt) => "upi://pay?pa=" + u.id + "&pn=" + encodeURIComponent(D.shop.name || "APNA CSC") + "&am=" + amt.toFixed(2) + "&cu=INR&tn=" + encodeURIComponent(payNoteUpi(amt));
+let WAQ = null;
+/* QR + amount + note ek image me banata hai (PNG blob) */
+function makeQrImage(u, amt, custName){
+  return new Promise((res, rej) => {
+    if (typeof QRCode === "undefined") return rej(new Error("QR library load nahi hui. Internet check karein."));
+    const box = document.createElement("div"); box.style.cssText = "position:fixed;left:-9999px;top:0"; document.body.appendChild(box);
+    try { new QRCode(box, { text: upiUri(u, amt), width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { box.remove(); return rej(e); }
+    setTimeout(() => {
+      try {
+        const src = box.querySelector("canvas"), W = 560, H = 800, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+        const x = cv.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, W, H);
+        x.fillStyle = "#1d4ed8"; x.fillRect(0, 0, W, 86); x.fillStyle = "#fff"; x.textAlign = "center"; x.font = "bold 34px Arial, sans-serif"; x.fillText(D.shop.name || "APNA CSC", W / 2, 55);
+        x.fillStyle = "#111"; x.font = "26px Arial, sans-serif"; x.fillText("Payment ke liye QR scan karein", W / 2, 135);
+        x.strokeStyle = "#d9deea"; x.lineWidth = 2; x.strokeRect(70, 160, 420, 420);
+        x.drawImage(src, 80, 170, 400, 400);
+        x.fillStyle = "#15803d"; x.font = "bold 64px Arial, sans-serif"; x.fillText(m(amt), W / 2, 660);
+        x.fillStyle = "#111"; x.font = "bold 26px Arial, sans-serif"; x.fillText(payNote(amt), W / 2, 705);
+        x.fillStyle = "#555"; x.font = "22px Arial, sans-serif"; x.fillText(u.label + ": " + u.id, W / 2, 745);
+        if (custName) { x.font = "20px Arial, sans-serif"; x.fillText(custName, W / 2, 780); }
+        box.remove(); cv.toBlob(b => b ? res(b) : rej(new Error("Image nahi ban saki")), "image/png");
+      } catch (e) { box.remove(); rej(e); }
+    }, 60);
+  });
+}
+function waText(c, amt, u){
+  return "Namaste " + c.name + ",\n" + (D.shop.name || "APNA CSC") + " ko " + m(amt) + " dene the. Kripya jald bhugtan karein." +
+    (u ? "\n\nNeeche di gayi QR image ko PhonePe / GPay / Paytm me scan karein (gallery se bhi scan ho jayegi).\nYa seedha UPI ID par bhejein: " + u.id : "") + "\n\nDhanyavaad.";
+}
+async function waRemind(){
+  const c = L === "W" ? WALK : D.customers.find(x => x.id === L), n = c && waNum(c.phone); if (!n) return alert("Is customer ka sahi mobile number nahi hai.");
+  const bal = cbal(L); if (bal <= 0) return alert("Is customer ka koi baaki nahi hai.");
+  const qa = $("qa") ? N(v("qa")) : 0, amt = Math.round((qa > 0 ? qa : bal) * 100) / 100;
+  const u = D.upis[D.upiSel] || D.upis[0];
+  if (!u) { window.open("https://wa.me/" + n + "?text=" + encodeURIComponent(waText(c, amt, null)), "_blank"); return; }
+  let blob; try { blob = await makeQrImage(u, amt, "Ledger: " + c.name); } catch (e) { if (confirm("QR image nahi ban saki (" + e.message + ").\n\nOK = sirf text message (UPI ID ke saath) WhatsApp par bhejein.")) window.open("https://wa.me/" + n + "?text=" + encodeURIComponent(waText(c, amt, u)), "_blank"); return; }
+  WAQ = { blob, n, c, amt, u, url: URL.createObjectURL(blob) };
+  let md = $("waMd"); if (!md) { md = document.createElement("div"); md.id = "waMd"; md.className = "md"; document.body.appendChild(md); }
+  const canShare = !!(navigator.canShare && navigator.canShare({ files: [new File([blob], "qr.png", { type: "image/png" })] }));
+  md.innerHTML = `<div class="mb"><div class="wam"><h3 style="margin:0">WhatsApp par QR bhejein</h3><img src="${WAQ.url}" alt="QR">
+  <p class="m" style="margin:0;text-align:center">${h(c.name)} (${h(c.phone)}) | ${m(amt)}</p>
+  <div class="row"><button class="b" onclick="waOpen()">WhatsApp kholein (image copy + message)</button>${canShare ? `<button class="g2" onclick="waShare()">Share (mobile)</button>` : ""}</div>
+  <div class="row"><button class="g2" onclick="waCopyImg()">Sirf image copy</button><button class="g2" onclick="waDl()">Download</button><button class="g2" onclick="waClose()">Band karein</button></div>
+  <p class="m" style="margin:0;text-align:center;font-size:12px">"WhatsApp kholein" dabane par image copy ho jati hai aur chat khulti hai. Message box me <b>Ctrl+V</b> (paste) karke bhej dein.</p></div></div>`;
+  md.style.display = "flex";
+}
+async function waCopyImg(){
+  if (!WAQ) return false;
+  try { await navigator.clipboard.write([new ClipboardItem({ "image/png": WAQ.blob })]); toast("QR image copy ho gayi. WhatsApp me Ctrl+V karein.", "OK", "document.getElementById('toast').style.display='none'"); return true; }
+  catch (e) { toast("Image copy nahi hui. 'Download' se save karke attach karein.", "OK", "document.getElementById('toast').style.display='none'"); return false; }
+}
+async function waOpen(){
+  if (!WAQ) return; const q = WAQ, w = window.open("about:blank", "_blank");
+  await waCopyImg();
+  const url = "https://wa.me/" + q.n + "?text=" + encodeURIComponent(waText(q.c, q.amt, q.u));
+  if (w) w.location.href = url; else window.open(url, "_blank");
+}
+async function waShare(){
+  if (!WAQ) return;
+  try { await navigator.share({ files: [new File([WAQ.blob], "payment-qr-" + WAQ.amt + ".png", { type: "image/png" })], text: waText(WAQ.c, WAQ.amt, WAQ.u) }); } catch (e) { if (e && e.name !== "AbortError") alert("Share nahi hua. Download karke bhejein."); }
+}
+function waDl(){ if (!WAQ) return; const a = document.createElement("a"); a.href = WAQ.url; a.download = "payment-qr-" + (WAQ.c.name || "customer").replace(/[^\w]+/g, "_") + "-" + WAQ.amt + ".png"; document.body.appendChild(a); a.click(); a.remove(); }
+function waClose(){ const md = $("waMd"); if (md) md.style.display = "none"; if (WAQ) { URL.revokeObjectURL(WAQ.url); WAQ = null; } }
+
+let LF = "", LT = "";
+let LORD = "desc", PLF = "", PLT = "";
+function cLedRows(){
+  const all = custRows(L).reverse(), rows = all.filter(x => (!LF || x.d >= LF) && (!LT || x.d <= LT)), last = rows[rows.length - 1];
+  const open = last ? r2(last.b - (last.dr - last.cr)) : ((LF && all.find(x => x.d < LF)) || { b: 0 }).b;
+  return { all, rows, open, close: rows.length ? rows[0].b : open };
+}
+function cLed(){
+  const { rows, open, close } = cLedRows(), per = !!(LF || LT), asc = LORD === "asc", ord = asc ? rows.slice().reverse() : rows;
+  const f = x => RC(x.c === "payments" ? "gr" : "rd", fd(x.d), h(x.t), x.dr ? `<b class="r">${m(x.dr)}</b>` : "", x.cr ? `<b class="g">${m(x.cr)}</b>` : "", m(x.b), X(x.c, x.id));
+  const op = per ? [RC("op", LF ? fd(LF) : "", "Opening balance (pichla baaki)", "", "", m(open), "")] : [];
+  $("cled").innerHTML = T(["Date", "Detail", "Charge", "Paid", "Balance", ""], [...(asc ? op : []), ...ord.map(f), ...(asc ? [] : op), RC("tt", "", per ? "Total (is period ka) / Closing" : "Total", `<b class="r">${m(sumR(rows, "dr"))}</b>`, `<b class="g">${m(sumR(rows, "cr"))}</b>`, m(close), "")]);
+}
+function stm(which, x){
+  const n = new Date(), td = today(); let a, b = td;
+  if (x === "m") a = td.slice(0, 8) + "01";
+  else if (x === "p") { a = isoD(new Date(n.getFullYear(), n.getMonth() - 1, 1)); b = isoD(new Date(n.getFullYear(), n.getMonth(), 0)); }
+  else a = fyOf(td) + "-04-01";
+  if (which === "c") { LF = a; LT = b; if ($("lf")) { $("lf").value = a; $("lt").value = b; } cLed(); } else { PLF = a; PLT = b; if ($("plf")) { $("plf").value = a; $("plt").value = b; } lTbl(); }
+}
+const stmBtns = w => `<button class="g2" onclick="stm('${w}','m')">Is mahine</button><button class="g2" onclick="stm('${w}','p')">Pichhla mahina</button><button class="g2" onclick="stm('${w}','f')">Is F-Y</button>`;
+const ordSel = (cb) => F("Order", `<select onchange="LORD=this.value;${cb}"><option value="desc"${LORD === "desc" ? " selected" : ""}>Nayi entry pehle</option><option value="asc"${LORD === "asc" ? " selected" : ""}>Purani entry pehle</option></select>`);
+const UPI_RE = /^[\w.\-]{2,}@[A-Za-z0-9]{2,}$/;
+function upiAdd(){
+  const l = v("ul").trim(), id = v("ui").trim();
+  if (need(l && id, "Label aur UPI ID dono bharein.")) return;
+  if (!UPI_RE.test(id)) return alert("UPI ID sahi nahi lag rahi (jaise name@bank).");
+  if (D.upis.some(u => u.id.toLowerCase() === id.toLowerCase())) return alert("Ye UPI ID pehle se judi hai.");
+  D.upis.push({ label: l, id }); save(); r();
+}
+function upiSet(i, k, val){
+  val = val.trim(); if (!val) return r();
+  if (k === "id") { if (!UPI_RE.test(val)) { alert("UPI ID sahi nahi lag rahi (jaise name@bank)."); return r(); } if (D.upis.some((u, j) => j !== i && u.id.toLowerCase() === val.toLowerCase())) { alert("Ye UPI ID pehle se judi hai."); return r(); } }
+  D.upis[i][k] = val; save(); r();
+}
+function upiDel(i){ if (!confirm("Ye UPI ID hata dein?")) return; D.upis.splice(i, 1); if (D.upiSel >= D.upis.length) D.upiSel = 0; save(); r(); }
+function upiDef(i){ D.upiSel = i; save(); }
+
+/* ---------- Work Tracker / Job cards ---------- */
+const JST = ["Pending", "In Process", "Ready", "Delivered"];
+let JF = "open", JQ = "";
+function vJob(){
+  const cnt = k => D.jobs.filter(j => j.st === k).length, names = [...new Set([...D.svc, ...D.jobs.map(j => j.svc)])];
+  return `<h2>📋 Work Tracker / Job Cards</h2><datalist id="sl">${names.map(x => `<option>${h(x)}</option>`).join("")}</datalist>
+  <div class="cards">${JST.map(k => `<div class="c" style="cursor:pointer" title="${k} kaam dekhein" onclick="JF='${k}';r()"><small>${k}</small><b class="${k === "Delivered" ? "g" : k === "Pending" ? "r" : ""}">${cnt(k)}</b></div>`).join("")}</div>
+  <div class="box"><div class="row">${F("Date", `<input type="date" id="jd" value="${today()}">`)}${cbHtml("jc", "Customer (naam likhein ya chunein)")}</div>
+  <div class="row" id="jwalk" style="margin-top:10px">${F("Customer ka naam (Walk-in ho to) *", `<input id="jn" style="width:260px">`)}</div>
+  <div class="row" style="margin-top:10px">${F("Mobile", `<input id="jp" style="width:150px">`)}${F("Service / Form ka naam *", `<input id="js" list="sl" style="width:240px">`)}${F("Application / Ack number", `<input id="ja" style="width:190px">`)}${F("Status", `<select id="jt">${JST.map(k => `<option>${k}</option>`).join("")}</select>`)}${F("Note", `<input id="jo" style="width:260px">`)}<button class="b" onclick="saveJob()">Add job</button><button class="b" onclick="saveJob(true)">Add job + WhatsApp confirmation</button></div></div>
+  <div class="box"><div class="row" style="margin-bottom:10px">${F("Status filter", `<select onchange="JF=this.value;jTbl()"><option value="open"${JF === "open" ? " selected" : ""}>Baaki kaam (Delivered ke alawa)</option><option value="Pending"${JF === "Pending" ? " selected" : ""}>Pending</option><option value="In Process"${JF === "In Process" ? " selected" : ""}>In Process</option><option value="Ready"${JF === "Ready" ? " selected" : ""}>Ready</option><option value="Delivered"${JF === "Delivered" ? " selected" : ""}>Delivered (Completed)</option><option value="all"${JF === "all" ? " selected" : ""}>Sab</option></select>`)}${F("Search (naam, mobile, service, ack no, note)", `<input id="jq" value="${h(JQ)}" oninput="JQ=this.value;jTbl()" style="width:320px">`)}${F("From", `<input type="date" id="jdf" onchange="jTbl()">`)}${F("To", `<input type="date" id="jdt" onchange="jTbl()">`)}${dBtns("jdf", "jdt", "jTbl")}<button class="g2" onclick="JF='open';JQ='';r()">Reset</button></div><div id="jtbl"></div></div>`;
+}
+function jcWalk(){ const e = $("jwalk"); if (e) e.style.display = v("jc") ? "none" : "flex"; }
+function jcPicked(){ jcWalk(); const c = D.customers.find(x => x.id === v("jc")); if (c && $("jp")) $("jp").value = c.phone || ""; }
+function saveJob(wa){
+  const c = v("jc") && D.customers.find(x => x.id === v("jc")), nm = c ? c.name : v("jn").trim(), svc = v("js").trim();
+  if (need(nm && svc, "Customer ka naam (Walk-in ho to) aur service ka naam bharein.")) return;
+  const nj = { id: uid(), d: v("jd") || today(), cid: c ? c.id : "", cname: nm, phone: v("jp").trim(), svc, ack: v("ja").trim(), st: v("jt"), note: v("jo").trim(), upd: today() };
+  D.jobs.push(nj); save(); r(); if (wa) jobWa(nj.id, "c");
+}
+function copyAck(id){ const j = D.jobs.find(x => x.id === id); if (j && j.ack) copyTxt(j.ack); }
+function jobSt(id, st){ const j = D.jobs.find(x => x.id === id); if (!j) return; j.st = st; j.upd = today(); save(); r(); }
+function jobWa(id, kind){
+  const j = D.jobs.find(x => x.id === id), n = j && waNum(j.phone); if (!n) return alert("Sahi mobile number nahi hai.");
+  const msg = kind === "c" ? "Namaste " + j.cname + ", aapka " + j.svc + " ka form/application " + D.shop.name + " se submit ho gaya hai." + (j.ack ? "\nApplication / Ack No: " + j.ack : "") + "\nStatus ki jaankari hum aapko batayenge. Dhanyavaad." : "Namaste " + j.cname + ", aapka " + j.svc + " ka kaam taiyar hai. Kripya " + D.shop.name + " par aakar le jayein. Dhanyavaad.";
+  window.open("https://wa.me/" + n + "?text=" + encodeURIComponent(msg), "_blank");
+}
+function jTbl(){
+  const q = JQ.toLowerCase(), f = v("jdf"), t = v("jdt");
+  const rs = D.jobs.filter(j => (!f || j.d >= f) && (!t || j.d <= t) && (JF === "all" || (JF === "open" ? (q || f || t || j.st !== "Delivered") : j.st === JF)) && (!q || [j.cname, j.phone, j.svc, j.ack, j.note, fd(j.d)].join(" ").toLowerCase().includes(q))).sort((a, b) => b.d.localeCompare(a.d) || b.id.localeCompare(a.id));
+  $("jtbl").innerHTML = `<p class="m">${rs.length} jobs${JF === "open" && (q || f || t) ? " (search / date me Delivered bhi shamil)" : ""}</p>` + T(["Date", "Customer", "Mobile", "Service", "Ack no", "Status", "Note", ""], rs.map(j => RC(j.st === "Delivered" ? "gr" : j.st === "Pending" ? "rd" : "", fd(j.d), j.cid ? `<button class="lk" onclick="openLedger('${j.cid}')">${h(j.cname)}</button>` : h(j.cname), h(j.phone), h(j.svc), (j.ack ? h(j.ack) + ` <button class="x" style="color:var(--p)" onclick="copyAck('${j.id}')">📋 Copy</button>` : ""), `<select onchange="jobSt('${j.id}',this.value)">${JST.map(k => `<option${k === j.st ? " selected" : ""}>${k}</option>`).join("")}</select>${j.st === "Delivered" && j.upd ? `<br><small>${fd(j.upd)}</small>` : ""}`, h(j.note), (waNum(j.phone) ? `<button class="x" style="color:var(--g)" onclick="jobWa('${j.id}','c')">📲 Confirm</button> ` : "") + (j.st === "Ready" && waNum(j.phone) ? `<button class="x" style="color:var(--g)" onclick="jobWa('${j.id}','r')">📲 Ready</button> ` : "") + X("jobs", j.id))));
+}
+
+/* ---------- Galla tally (cash drawer) ---------- */
+let GD = null;
+function gallaNums(d){
+  const sum = (a, f) => r2(a.reduce((t, x) => t + f(x), 0));
+  const cs = sum(D.sales.filter(s => s.d === d && s.mode === "Cash"), s => s.rec), cp = sum(D.payments.filter(p => p.d === d && p.mode === "Cash"), p => p.amt);
+  const ce = sum(allExp().filter(e => e.d === d && e.mode !== "UPI"), e => e.amt);
+  const us = r2(sum(D.sales.filter(s => s.d === d && s.mode === "UPI"), s => s.rec) + sum(D.payments.filter(p => p.d === d && p.mode === "UPI"), p => p.amt));
+  const G = D.galla || {}, g = G[d] || {}, has = x => x !== undefined && x !== null && x !== "";
+  const prevD = Object.keys(G).filter(k => k < d && has(G[k].counted)).sort().pop(), sug = prevD ? N(G[prevD].counted) : null;
+  const open = has(g.open) ? N(g.open) : (sug !== null ? sug : 0), out = N(g.out), exp = r2(open + cs + cp - ce - out), counted = has(g.counted) ? N(g.counted) : null;
+  return { cs, cp, ce, us, g, sug, prevD, open, out, exp, counted, diff: counted === null ? null : r2(counted - exp), usedSug: !has(g.open) && sug !== null };
+}
+function gallaRender(){
+  const e = $("gbox"); if (!e) return; if (!GD) GD = today();
+  const n = gallaNums(GD), g = n.g, inp = (id, key, w, ph) => `<input type="text" inputmode="decimal" class="amt" id="${id}" value="${h(g[key] ?? "")}" placeholder="${h(ph || "")}" style="width:${w}px" oninput="gallaSet('${key}',this.value)">`;
+  e.innerHTML = `<h3>💵 Galla Tally (Cash Drawer)</h3><div class="row">${F("Tareekh", `<input type="date" value="${GD}" onchange="GD=this.value;gallaRender()">`)}${F("Opening cash (subah ka float)", inp("gop", "open", 170, n.sug !== null ? n.sug + " (pichhli ginti)" : "0"))}${F("Cash nikala (bank / ghar)", inp("gout", "out", 150, "0"))}${F("Asli ginti (counted cash)", inp("gcnt", "counted", 160, ""))}</div><div id="gnums"></div>`;
+  gallaUpd();
+}
+function gallaUpd(){
+  const e = $("gnums"); if (!e) return; const n = gallaNums(GD);
+  const row = (l, v_, b) => `<tr><td${b ? ' style="font-weight:700"' : ""}>${l}</td><td class="n" style="text-align:right${b ? ";font-weight:700" : ""}">${v_}</td></tr>`;
+  const st = n.diff === null ? `<span class="m">Asli ginti bharein to match dikhega</span>` : n.diff === 0 ? `<b class="g">✅ Galla match</b>` : n.diff < 0 ? `<b class="r">❌ Kam: ${m(-n.diff)}</b>` : `<b style="color:var(--o)">⚠ Zyada: ${m(n.diff)}</b>`;
+  e.innerHTML = `<div class="w"><table style="max-width:520px;margin-top:10px">${row("Opening cash" + (n.usedSug ? " (pichhli ginti " + fd(n.prevD) + " se)" : ""), m(n.open))}${row("+ Aaj ki Cash sale", m(n.cs))}${row("+ Customer ka Cash payment", m(n.cp))}${row("− Cash kharcha (lender payment bhi)", m(n.ce))}${row("− Cash nikala", m(n.out))}${row("= Shaam ko galle mein hona chahiye", m(n.exp), true)}${n.counted !== null ? row("Asli ginti", m(n.counted)) : ""}</table></div>${!n.usedSug && n.sug !== null && n.open !== n.sug ? `<p style="margin-top:8px"><b class="r">⚠ Opening ${m(n.open)} hai, par pichhli ginti (${fd(n.prevD)}) ${m(n.sug)} thi: fark ${m(r2(n.open - n.sug))}</b></p>` : ""}<p style="margin-top:8px">${st}</p><p class="m">UPI aaj (bank mein, galle mein nahi): <b>${m(n.us)}</b></p>`;
+}
+function gallaSet(k, val){ D.galla = D.galla || {}; const g = D.galla[GD] = D.galla[GD] || {}; g[k] = val; save(); gallaUpd(); }
+
+/* ---------- fast-entry buttons ---------- */
+const quickBar = tg => D.quick && D.quick.length ? `<div class="row" style="margin-bottom:10px;align-items:center"><b class="m" style="margin:0">⚡ Fast entry:</b>${D.quick.map((q, i) => `<button class="g2" onclick="qk('${tg}',${i})">${h(q.svc)} ${m(q.amt)}</button>`).join("")}</div>` : "";
+function qk(tg, i){
+  const q = D.quick[i]; if (!q) return; const arr = tg === "s" ? SL : IL;
+  const same = arr.find(l => l.svc === q.svc && String(l.amt).trim() !== "");
+  if (same) same.amt = String(r2(N(same.amt) + q.amt));
+  else { const free = arr.find(l => !l.svc.trim() && !String(l.amt).trim()); if (free) { free.svc = q.svc; free.amt = String(q.amt); } else arr.push(tg === "s" ? { svc: q.svc, rmk: "", amt: String(q.amt), fee: "" } : { svc: q.svc, rmk: "", amt: String(q.amt), rate: "" }); }
+  if (tg === "s") { srAuto = true; slRender(); } else { if (!EI) rrAuto = true; ilRender(); }
+}
+function qkAdd(){ const l = v("qks").trim(), a = N(v("qka")); if (need(l && a > 0, "Service ka naam aur amount bharein.")) return; D.quick.push({ svc: l, amt: a }); save(); r(); }
+function qkSet(i, k, val){ if (k === "amt") { const a = N(val); if (a > 0) D.quick[i].amt = a; } else if (val.trim()) D.quick[i].svc = val.trim(); save(); r(); }
+function qkDel(i){ D.quick.splice(i, 1); save(); r(); }
+
+/* ---------- previous-balance badge next to the customer box ---------- */
+function cbBadge(p){
+  const e = $(p + "b"); if (!e) return; const id = v(p), c = id && D.customers.find(x => x.id === id), b = c ? cbal(c.id) : 0;
+  e.innerHTML = c && b > 0 ? `<span style="display:inline-block;margin-top:4px;color:#fff;background:var(--r);padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">⚠ Purana Udhar: ${m(b)}</span>` : c && b < 0 ? `<span style="display:inline-block;margin-top:4px;color:#fff;background:var(--g);padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">Advance: ${m(-b)}</span>` : "";
+}
+
+/* ---------- copy / WhatsApp helpers ---------- */
+function copyTxt(t){
+  const done = () => toast("Copy ho gaya: " + t, "OK", "document.getElementById('toast').style.display='none'");
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => alert("Copy nahi hua. Number: " + t));
+  else { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) { alert("Number: " + t); } document.body.removeChild(ta); }
+}
+
+function custRows(id){
+  let b = 0; const hid = new Set();
+  const mine = D.sales.filter(s => s.cid === cm(id)).map(s => { const a = firstLine(s) ? advOf(s) : []; a.forEach(p => hid.add(p.id)); return { s, adv: r2(a.reduce((q, p) => q + p.amt, 0)) }; });
+  return [...mine.map(({ s, adv }) => ({ d: s.d, t: s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : ""), dr: s.amt, cr: r2(s.rec + adv), id: s.id, c: "sales" })),
+    ...D.payments.filter(p => p.cid === cm(id) && !hid.has(p.id)).map(p => ({ d: p.d, t: "Payment received (" + p.mode + ")" + (p.rmk ? " - " + p.rmk : ""), dr: 0, cr: p.amt, id: p.id, c: "payments" }))]
+    .sort((a, z) => a.d.localeCompare(z.d) || a.id.localeCompare(z.id)).map(x => (b += x.dr - x.cr, { ...x, b }));
+}
+function upiBox(){
+  const bal = cbal(L); if (bal <= 0) return "";
+  if (!D.upis.length) return `<div class="box"><h3>UPI se payment lein</h3><p class="m">Abhi koi UPI ID nahi jodi hai. <button class="g2" onclick="go('bk')">UPI ID jodein (Backup and Excel)</button></p></div>`;
+  return `<div class="box"><h3>UPI se payment lein</h3><div class="upi">
+  <div class="ul"><div class="seg">${D.upis.map((a, i) => `<button type="button" class="${i === D.upiSel ? "on" : ""}" onclick="selUpi(${i})"><strong>${h(a.label)}</strong><small>${h(a.id)}</small></button>`).join("")}</div>
+  <div class="row">${F("Amount lena hai (₹)", `<input type="text" inputmode="decimal" class="amt" id="qa" value="${bal}" oninput="drawQR()" style="width:160px">`)}</div>
+  <p class="m">Payment aane ke baad neeche "Add payment" (mode UPI) se entry jod dein.</p></div>
+  <div class="qrw"><div id="lqr"></div><b id="qamt"></b><div class="m" id="qpay"></div></div></div></div>`;
+}
+function selUpi(i){ D.upiSel = i; save(); r(); }
+function drawQR(){
+  const el = $("lqr"); if (!el) return;
+  const a = D.upis[D.upiSel] || D.upis[0], amt = Math.round(N(v("qa")) * 100) / 100, c = L === "W" ? WALK : D.customers.find(x => x.id === L);
+  el.innerHTML = ""; $("qamt").textContent = amt > 0 ? m(amt) : "Amount bharein"; $("qpay").textContent = a.label + " – " + a.id;
+  if (!(amt > 0)) return;
+  if (typeof QRCode === "undefined") { el.textContent = "QR library load nahi hui. Internet check karein."; return; }
+  new QRCode(el, { text: upiUri(a, amt), width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+}
+function fyOf(d){ const y = +d.slice(0, 4), mo = +d.slice(5, 7); return mo >= 4 ? y : y - 1; }
+function fyLbl(a){ return a + "-" + (a + 1); }
+function inFY(d){ return FY === "all" || fyOf(d) === FY; }
+function fyList(){
+  const st = new Set([fyOf(today())]); if (FY !== "all") st.add(FY);
+  [D.sales, D.payments, D.expenses, D.ptx, D.assets].forEach(a => a.forEach(x => x.d && st.add(fyOf(x.d))));
+  return [...st].sort((a, b) => b - a);
+}
+function setFY(x){ FY = x === "all" ? "all" : +x; r(); }
+function saveShop(){ D.shop = { name: v("shn").trim() || "APNA CSC", phone: v("shp").trim(), addr: v("sha").trim() }; save(); alert("Dukaan ki jaankari save ho gayi."); }
+/* ---------- render ---------- */
+function r(){
+  const fs = $("fysel"); if (fs) fs.innerHTML = `<option value="all"${FY === "all" ? " selected" : ""}>Sabhi saal</option>` + fyList().map(a => `<option value="${a}"${a === FY ? " selected" : ""}>F-Y ${fyLbl(a)}</option>`).join("");
+  $("main").innerHTML = { dash: vDash, sales: vSales, inv: vInv, job: vJob, gst: vGst, cust: vCust, exp: vExp, lend: vLend, ast: vAst, bk: vBk }[V]();
+  document.querySelectorAll("nav [data-v]").forEach(b => b.classList.toggle("on", b.dataset.v === V));
+  if (V === "sales") { slRender(); sTbl(); }
+  if (V === "exp") eTbl();
+  if (V === "dash") gallaRender();
+  if (V === "sales") cbBadge("sc");
+  if (V === "inv") cbBadge("rc");
+  if (V === "job") cbBadge("jc");
+  if (V === "job") { jcWalk(); jTbl(); }
+  if (V === "lend") { if (P) lTbl(); else pTbl(); }
+  if (V === "inv") { ilRender(); iTbl(); rcWalk(); }
+  if (V === "cust") { if (L) cLed(); else cTbl(); }
+  if (V === "cust" && L) drawQR();
+  bkBadge();
+}
+function openLedger(id){ V = "cust"; L = id; P = null; MS.clear(); r(); window.scrollTo && window.scrollTo(0, 0); }
+function go(x){ V = x; L = P = null; CQ = ""; MS.clear(); MO = false; EI = null; IS = null; PSHOW = "all"; Object.keys(PF).forEach(k => PF[k] = ""); Object.keys(CF).forEach(k => CF[k] = ""); r(); }
+document.addEventListener("focusout", e => { if (e.target.classList && e.target.classList.contains("amt")) calcField(e.target); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && $("waMd") && $("waMd").style.display === "flex") { waClose(); return; }
+  if (e.key === "Enter" && (e.defaultPrevented || (e.target.closest && e.target.closest(".cb")))) return;
+  if (e.key === "Enter" && e.target.classList && e.target.classList.contains("amt")) { const st = calcField(e.target); if (st === "changed" || st === "bad") { e.preventDefault(); return; } }
+  if (e.key === "Enter" && e.target.matches("input:not([type=file])")) { const b = e.target.closest(".row, .mb, .sb"); const bt = b && b.querySelector(".b"); if (bt) { e.preventDefault(); bt.click(); } }
+});
+boot();
+</script>
+</body>
+</html>
