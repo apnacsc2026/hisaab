@@ -556,10 +556,28 @@ function vSales(){
 let SL = [{ svc: "", rmk: "", amt: "", fee: "" }], srAuto = true;
 function slReset(){ SL = [{ svc: "", rmk: "", amt: "", fee: "" }]; srAuto = true; }
 function slRender(){
-  $("slines").innerHTML = `<div class="w"><table><tr><th>Service</th><th>Remark / Description</th><th>Total Lena (customer se)</th><th>Fees / Govt. Fees / Other (customer ka kharcha)</th><th>Service Charge (meri income, auto)</th><th></th></tr>${SL.map((l, i) => `<tr><td><input${i === 0 ? ' id="ss"' : ""} list="sl" value="${h(l.svc)}" placeholder="Aadhaar, PAN..." style="width:210px" oninput="SL[${i}].svc=this.value"></td><td><input value="${h(l.rmk)}" style="width:100%;min-width:220px" oninput="SL[${i}].rmk=this.value"></td><td><input type="text" inputmode="decimal" class="amt" value="${h(l.amt)}" style="width:130px" oninput="SL[${i}].amt=this.value;slTot()"></td><td><input type="text" inputmode="decimal" class="amt" value="${h(l.fee || "")}" style="width:150px" oninput="SL[${i}].fee=this.value;slTot()"></td><td class="nw"><b id="slt${i}" style="color:${N(l.fee) > N(l.amt) ? "#c0392b" : "inherit"}">${m(Math.max(0, r2(N(l.amt) - N(l.fee))))}</b></td><td>${SL.length > 1 ? `<button class="x" onclick="SL.splice(${i},1);slRender()">✕</button>` : ""}</td></tr>`).join("")}</table></div><button class="g2" style="margin-top:8px" onclick="SL.push({svc:'',rmk:'',amt:'',fee:''});slRender()">+ Line jodein</button>`;
+  $("slines").innerHTML = `<div class="w"><table><tr><th>Service</th><th>Remark / Description</th><th>Total Lena (customer se)</th><th>Fees / Govt. Fees / Other (customer ka kharcha)</th><th>Service Charge (meri income)</th><th></th></tr>${SL.map((l, i) => `<tr><td><input${i === 0 ? ' id="ss"' : ""} list="sl" value="${h(l.svc)}" placeholder="Aadhaar, PAN..." style="width:210px" oninput="SL[${i}].svc=this.value"></td><td><input value="${h(l.rmk)}" style="width:100%;min-width:220px" oninput="SL[${i}].rmk=this.value"></td><td><input type="text" inputmode="decimal" class="amt" value="${h(l.amt)}" style="width:130px" oninput="slSet(${i},'amt',this.value)"></td><td><input type="text" inputmode="decimal" class="amt" id="slf${i}" value="${h(l.fee || "")}" style="width:150px" oninput="slSet(${i},'fee',this.value)"></td><td><input type="text" inputmode="decimal" class="amt" id="slv${i}" value="${h(slSvcVal(l))}" style="width:130px;font-weight:700" oninput="slSet(${i},'svc',this.value)" onblur="slTot()"></td><td>${SL.length > 1 ? `<button class="x" onclick="SL.splice(${i},1);slRender()">✕</button>` : ""}</td></tr>`).join("")}</table></div><button class="g2" style="margin-top:8px" onclick="SL.push({svc:'',rmk:'',amt:'',fee:''});slRender()">+ Line jodein</button>`;
   slTot();
 }
-function slTot(){ SL.forEach((l, i) => { const e = $("slt" + i); if (e) { const sv = r2(N(l.amt) - N(l.fee)); e.textContent = m(Math.max(0, sv)); e.style.color = sv < 0 ? "#c0392b" : "inherit"; } }); const t = r2(SL.reduce((a, l) => a + N(l.amt), 0)); $("stot").value = t ? String(t) : ""; if (srAuto) $("sr").value = t ? String(t) : ""; }
+const slSvcVal = l => l.sv ? l.sv : (N(l.amt) > 0 ? String(Math.max(0, r2(N(l.amt) - N(l.fee)))) : "");
+function slSet(i, k, val){
+  const l = SL[i], a = N(l.amt);
+  if (k === "amt") { l.amt = val; if (l.sv && N(l.fee) === 0 && N(val) > 0 && N(l.sv) <= N(val)) { l.fee = String(r2(N(val) - N(l.sv))); l.sv = ""; } }
+  else if (k === "fee") { l.fee = val; l.sv = ""; }
+  else if (!String(val).trim()) { l.sv = ""; l.fee = ""; }
+  else if (a > 0 && N(val) <= a) { const f = r2(a - N(val)); l.fee = f > 0 ? String(f) : ""; l.sv = ""; }
+  else l.sv = val;
+  slTot();
+}
+function slTot(){
+  SL.forEach((l, i) => {
+    const sv = $("slv" + i), fe = $("slf" + i), bad = N(l.fee) > N(l.amt) || (l.sv && N(l.sv) > N(l.amt));
+    if (sv && document.activeElement !== sv) sv.value = slSvcVal(l);
+    if (fe && document.activeElement !== fe) fe.value = l.fee || "";
+    if (sv) sv.style.color = bad ? "#c0392b" : "";
+  });
+  const t = r2(SL.reduce((a, l) => a + N(l.amt), 0)); $("stot").value = t ? String(t) : ""; if (srAuto) $("sr").value = t ? String(t) : "";
+}
 function udharAsk(gen){
   const ph = ((gen || "").match(/\d[\d\s-]{8,}\d/) || [""])[0].replace(/\D/g, ""), nm = (gen || "").replace(/[\d\s+-]{7,}/g, "").replace(/[,|]+\s*$/, "").trim();
   $("md").innerHTML = `<div class="mb"><h3>Udhaar wali entry: customer ka naam?</h3><p class="m">Walk-in me sab udhaar ek hi ledger me mil jate hain. Naam dene par is customer ka alag ledger banega.</p>${F("Purana customer chunein", `<select id="uc"><option value="">- naya customer -</option>${D.customers.map(x => `<option value="${x.id}">${h(x.name)}</option>`).join("")}</select>`)}${F("Ya naya naam", `<input id="un" type="text" value="${h(nm)}">`)}${F("Mobile (optional)", `<input id="up" type="text" inputmode="numeric" value="${h(ph)}">`)}<div class="row" style="margin-top:8px"><button class="b" onclick="udharSave()">Customer ke naam se save</button><button class="g2" onclick="closeEd();addSale({wk:true})">Walk-in me hi save</button><button class="g2" onclick="closeEd()">Cancel</button></div></div>`;
@@ -580,6 +598,7 @@ function addSale(o){
   const ls = SL.map(l => ({ svc: l.svc.trim(), rmk: l.rmk.trim(), fee: Math.max(0, N(l.fee)), amt: N(l.amt) })).filter(l => l.amt || l.svc);
   if (need(ls.length && ls.every(l => l.svc && l.amt > 0), "Har line mein service aur Total Lena bharein.")) return;
   if (need(ls.every(l => l.fee <= l.amt), "Fees, Total Lena se zyada nahi ho sakti.")) return;
+  if (need(SL.every(l => !(l.sv && N(l.sv) > N(l.amt))), "Service Charge, Total Lena se zyada nahi ho sakta.")) return;
   const d = v("sd") || today(), cid = o.cid || v("sc"), total = r2(ls.reduce((a, l) => a + l.amt, 0)), recIn = v("sr") === "" ? total : N(v("sr")), rec0 = Math.max(0, Math.min(recIn, total)), gen = v("sk").trim(), mode = v("sm");
   if (rec0 < total && !cid && !o.wk) return udharAsk(gen);
   if (cid && ls.some(l => D.sales.some(s => s.d === d && s.cid === cid && s.amt === l.amt && s.svc.toLowerCase() === l.svc.toLowerCase())) && !confirm("Is customer ki usi din, usi service aur usi amount ki entry pehle se hai. Dobara jodein?")) return;
@@ -835,7 +854,17 @@ function edit(c, id){
     : `<input id="e_${k}" type="${t === "date" ? "date" : "text"}"${t === "n" ? ' inputmode="decimal" class="amt"' : ""} value="${h(o[k])}">`);
   $("md").innerHTML = `<div class="mb"><h3>Entry edit karein</h3>${FD[c].filter(f => f[0] !== "gstin" || D.gst.on).map(fld).join("")}<div class="row" style="margin-top:8px"><button class="b" onclick="saveEd()">Save changes</button><button class="g2" onclick="closeEd()">Cancel</button></div></div>`;
   if (c === "sales" && !o.invId && advAmt(o) > 0) $("e_rec").value = r2(o.rec + advAmt(o));
+  if (c === "sales") {
+    $("e_fee").closest("label").insertAdjacentHTML("afterend", F("Service Charge (meri income)", `<input id="e_svcx" type="text" inputmode="decimal" class="amt">`));
+    $("e_amt").oninput = () => edSync("amt"); $("e_fee").oninput = () => edSync("fee"); $("e_svcx").oninput = () => edSync("svc"); edSync("fee");
+  }
   $("md").style.display = "flex";
+}
+function edSync(src){
+  const a = N(v("e_amt")), fe = $("e_fee"), sv = $("e_svcx"); if (!fe || !sv) return;
+  if (src === "svc") { const t = String(sv.value).trim(); if (!t) fe.value = "0"; else if (N(t) <= a) fe.value = String(r2(a - N(t))); }
+  else sv.value = a > 0 ? String(Math.max(0, r2(a - N(fe.value)))) : "";
+  sv.style.color = N(fe.value) > a || (src === "svc" && N(sv.value) > a) ? "#c0392b" : "";
 }
 function closeEd(){ $("md").style.display = "none"; ED = null; }
 function saveEd(){
@@ -1206,9 +1235,9 @@ function payInc(){
     const ps = (pp[cid] || []).sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)); let i = 0;
     (g[cid] || []).sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)).forEach(s => {
       let pe = r2(s.amt - s.rec);
-      while (pe > 0 && i < ps.length) { const t = Math.min(pe, ps[i].left); ps[i].left = r2(ps[i].left - t); pe = r2(pe - t); if (sFee(s) <= 0 && t > 0) out.push({ d: ps[i].d, a: t }); if (ps[i].left <= 0) i++; }
+      while (pe > 0 && i < ps.length) { const t = Math.min(pe, ps[i].left); ps[i].left = r2(ps[i].left - t); pe = r2(pe - t); if (sFee(s) <= 0 && t > 0) out.push({ d: ps[i].d > s.d ? ps[i].d : s.d, a: t }); if (ps[i].left <= 0) i++; }
     });
-    ps.forEach(p => { if (p.left > 0) out.push({ d: p.d, a: p.left }); });
+    /* bacha hua (advance) paisa customer ka hai, jab tak kisi service me use na ho income nahi */
   });
   return out;
 }
@@ -1626,7 +1655,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.classList && e.target.classList.contains("amt")) { const st = calcField(e.target); if (st === "changed" || st === "bad") { e.preventDefault(); return; } }
   if (e.key === "Enter" && e.target.matches("input:not([type=file])")) { const b = e.target.closest(".row, .mb, .sb"); const bt = b && b.querySelector(".b"); if (bt) { e.preventDefault(); bt.click(); } }
 });
-const APP_VER = "V34", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
+const APP_VER = "V36", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
 { const e = $("ver"); if (e) e.textContent = verTxt(); document.querySelectorAll("#setup .sb,#lock .sb").forEach(x => { x.dataset.v = verTxt(); }); }
 boot();
 </script>
