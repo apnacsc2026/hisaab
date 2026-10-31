@@ -18,6 +18,8 @@ nav h1{color:#fff;font-size:18px;padding:4px 10px 14px}
 nav h1 small{display:block;font-size:11px;font-weight:400;color:#8fa0c0;margin-top:2px}
 nav button{background:none;border:none;color:inherit;font:inherit;font-weight:600;text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer}
 nav button:hover{background:#1a2a4d}nav button.on{background:var(--p);color:#fff}
+#ver{font-size:11px;font-weight:600;color:#8da2c7;text-align:center;padding:8px 0 2px;letter-spacing:.2px}
+#setup .sb::after,#lock .sb::after{content:attr(data-v);display:block;margin-top:14px;font-size:11px;color:#8a97ad;text-align:center}
 #bk{margin-top:auto;font-size:12px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;line-height:1.35}
 #bk.on{background:#11452e;color:#b7f0d1}#bk.off{background:#5a1d17;color:#ffd5d0}
 main{flex:1;min-width:0;padding:22px}
@@ -85,13 +87,16 @@ h2{font-size:24px;letter-spacing:-.2px}
 .c b{font-size:23px}
 .b{box-shadow:0 2px 8px rgba(29,78,216,.28)}.b:hover{filter:brightness(1.07)}
 th{text-transform:uppercase;letter-spacing:.4px;font-size:11px}
-.dg{font-size:13px;font-weight:700;color:var(--m);margin:4px 2px 8px}
-.cards.dcs{grid-template-columns:repeat(auto-fill,minmax(205px,1fr))}
-.dc{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--s);border:1px solid #e3e8f2;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.06),0 6px 18px rgba(16,24,40,.05)}
-.dc .ic{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:21px;background:var(--ps)}
+.dg{font-size:12px;font-weight:700;color:var(--m);margin:2px 2px 6px}
+.cards.dcs{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:12px}
+.dc{display:flex;align-items:center;gap:11px;padding:10px 13px;min-height:77px;box-sizing:border-box;background:var(--s);border:1px solid #e3e8f2;border-radius:11px;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.dc .ic{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:19px;background:var(--ps)}
 .dc .ic.g{background:#e4f6ec}.dc .ic.r{background:#fdecea}
-.dc small{display:block;color:var(--m);font-size:12.5px;line-height:1.3}
-.dc b{display:block;font-size:22px;margin-top:3px;font-variant-numeric:tabular-nums}
+.dc small{display:block;color:var(--m);font-size:12px;line-height:1.25}
+.dc b{display:block;font-size:19px;margin-top:2px;font-variant-numeric:tabular-nums}
+tr.cn td{background:#fdeceb;color:#a33a34;text-decoration:line-through;text-decoration-color:#e0a09b}
+tr.cn td:first-child{box-shadow:inset 4px 0 0 #e8a5a0}
+tr.cn td:nth-last-child(2),tr.cn td:last-child{text-decoration:none}
 .dsec>summary{cursor:pointer;font-size:16px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center}
 .dsec>summary::-webkit-details-marker{display:none}.dsec>summary::after{content:"▾ Kholein";font-size:12px;color:var(--p);font-weight:600}
 .dsec[open]>summary::after{content:"▴ Band karein"}.dsec[open]>summary{margin-bottom:12px}
@@ -132,6 +137,7 @@ tr.op td{background:#fff8e6;font-weight:600}
   <button data-v="bk" onclick="go('bk')">⚙️ Backup and Excel</button>
   <button onclick="lockNow()">🔒 Lock karein</button>
   <div id="bk" class="off" onclick="bkClick()"></div>
+  <div id="ver"></div>
 </nav>
 <main id="main"></main>
 <div id="md" class="md" onclick="if(event.target===this)closeEd()"></div>
@@ -865,7 +871,7 @@ function printDay(){
   const d = v("drd") || today(), ss = D.sales.filter(s => s.d === d), ps = D.payments.filter(p => p.d === d), es = allExp().filter(e => e.d === d);
   const rec = md => r2(ss.filter(s => s.mode === md).reduce((a, s) => a + s.rec, 0) + ps.filter(p => p.mode === md).reduce((a, p) => a + p.amt, 0));
   const billed = r2(ss.reduce((a, s) => a + s.amt, 0)), got = r2(ss.reduce((a, s) => a + s.rec, 0) + ps.reduce((a, p) => a + p.amt, 0)), exp = r2(es.reduce((a, e) => a + e.amt, 0)), fees = r2(ss.reduce((a, x) => a + sFee(x), 0)), inc = r2(ss.reduce((a, x) => a + incSale(x), 0) + payInc().filter(x => x.d === d).reduce((a, x) => a + x.a, 0));
-  const rows = [...ss.map(s => R("Sale", h(cn(s.cid)), h(s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : "")), m(s.amt), m(s.rec), s.mode)), ...ps.map(p => R("Payment", h(cn(p.cid)), "Baaki ka payment" + (p.rmk ? " (" + h(p.rmk) + ")" : ""), "", m(p.amt), p.mode)), ...es.map(e => R("Kharcha", h(e.cat), h(e.note), m(e.amt), "-", "-"))];
+  const rows = [...ss.map(s => R("Sale", h(cn(s.cid)), h(s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : "")), m(s.amt), m(s.rec), s.rec > 0 ? s.mode : "-")), ...ps.map(p => R("Payment", h(cn(p.cid)), "Baaki ka payment" + (p.rmk ? " (" + h(p.rmk) + ")" : ""), "", m(p.amt), p.mode)), ...es.map(e => R("Kharcha", h(e.cat), h(e.note), m(e.amt), "-", "-"))];
   printDoc("Din ka report: " + fd(d), "Sales " + ss.length + " | Customer payment " + ps.length + " | Kharcha " + es.length, ["Type", "Customer / Naam", "Detail", "Amount", "Mila", "Mode"], rows, `Kul bill: <b>${m(billed)}</b> | <span style="color:#d92d20">Udhaar (baaki): <b>${m(r2(ss.reduce((a, s) => a + Math.max(0, s.amt - s.rec), 0)))}</b></span> | Cash mila: <b>${m(rec("Cash"))}</b> | UPI mila: <b>${m(rec("UPI"))}</b> | Kul mila: <b>${m(got)}</b><br>${fees ? `Fees (customer ka kharcha, income nahi): <b>${m(fees)}</b> | ` : ""}Meri income: <b>${m(inc)}</b> | Kharcha: <b>${m(exp)}</b> | Net (income - kharcha): <b>${m(r2(inc - exp))}</b>`, "Din-report-" + d);
 }
 function printCust(){
@@ -1157,7 +1163,7 @@ function iTbl(){
   const live = rs.filter(i => !i.canc);
   $("itbl").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${live.length} receipt/invoice | Kul ${m(live.reduce((a, i) => a + i.total, 0))} | Baaki ${m(live.reduce((a, i) => a + i.total - i.rec, 0))}</p>` +
     T(["Number", "Date", "Customer", "Taxable", "GST", "Total", "Received", "Status", ""], rs.map(i => { const tx = r2(i.lines.reduce((a, l) => a + l.taxable, 0)), gs = r2(i.lines.reduce((a, l) => a + l.tax, 0)), due = r2(i.total - i.rec);
-      return RC(i.canc ? "" : due > 0 ? "rd" : "gr", `<b>${h(i.no)}</b>`, fd(i.d), i.cid ? `<button class="lk" onclick="openLedger('${i.cid}')">${h(i.cname)}</button>` : h(i.cname), m(tx), gs ? m(gs) : "-", m(i.total), m(i.rec), (i.canc ? "Cancelled" : due > 0 ? `<b class="r">Baaki ${m(due)}</b>` : `<b class="g">Paid</b>`) + (i.editedOn ? `<br><small title="${h(i.editReason || "")}">✎ Edited ${fd(i.editedOn.slice(0, 10))}</small>` : ""), `<button class="x" style="color:var(--p)" onclick="printInv('${i.id}','a4')">🖨 A4</button> <button class="x" style="color:var(--p)" onclick="printInv('${i.id}',TH)">🧾 Thermal</button> ${i.canc ? "" : `<button class="x" style="color:var(--p)" onclick="editInv('${i.id}')">✎ Edit</button> <button class="x" onclick="cancelInv('${i.id}')">Cancel</button>`}`); }));
+      return RC(i.canc ? "cn" : due > 0 ? "rd" : "gr", `<b>${h(i.no)}</b>`, fd(i.d), i.cid ? `<button class="lk" onclick="openLedger('${i.cid}')">${h(i.cname)}</button>` : h(i.cname), m(tx), gs ? m(gs) : "-", m(i.total), m(i.rec), (i.canc ? `<b class="r">Cancelled</b>` : due > 0 ? `<b class="r">Baaki ${m(due)}</b>` : `<b class="g">Paid</b>`) + (i.editedOn ? `<br><small title="${h(i.editReason || "")}">✎ Edited ${fd(i.editedOn.slice(0, 10))}</small>` : ""), `<button class="x" style="color:var(--p)" onclick="printInv('${i.id}','a4')">🖨 A4</button> <button class="x" style="color:var(--p)" onclick="printInv('${i.id}',TH)">🧾 Thermal</button> ${i.canc ? "" : `<button class="x" style="color:var(--p)" onclick="editInv('${i.id}')">✎ Edit</button> <button class="x" onclick="cancelInv('${i.id}')">Cancel</button>`}`); }));
 }
 function cancelInv(id){
   const i = D.inv.find(x => x.id === id); if (!i || i.canc) return;
@@ -1407,19 +1413,21 @@ async function waRemind(){
   <p class="m" style="margin:0;text-align:center">${h(c.name)} (${h(c.phone)}) | ${m(amt)}</p>
   <div class="row"><button class="b" onclick="waOpen()">WhatsApp kholein (image copy + message)</button>${canShare ? `<button class="g2" onclick="waShare()">Share (mobile)</button>` : ""}</div>
   <div class="row"><button class="g2" onclick="waCopyImg()">Sirf image copy</button><button class="g2" onclick="waDl()">Download</button><button class="g2" onclick="waClose()">Band karein</button></div>
-  <p class="m" style="margin:0;text-align:center;font-size:12px">"WhatsApp kholein" dabane par image copy ho jati hai aur chat khulti hai. Message box me <b>Ctrl+V</b> (paste) karke bhej dein.</p></div></div>`;
+  <p class="m" style="margin:0;text-align:center;font-size:12px">"WhatsApp kholein" dabane par image copy ho jati hai aur chat khulti hai. Message box me <b>Ctrl+V</b> (paste) karke bhej dein.<br>Chrome "Allow" puche to Allow dabayein. Computer ke file se chalane par ye har baar puchhta hai, online link (https) par sirf ek baar.</p></div></div>`;
   md.style.display = "flex";
+  WAQ.wa = "https://wa.me/" + n + "?text=" + encodeURIComponent(waText(c, amt, u)); waCopyImg();
 }
 async function waCopyImg(){
   if (!WAQ) return false;
   try { await navigator.clipboard.write([new ClipboardItem({ "image/png": WAQ.blob })]); toast("QR image copy ho gayi. WhatsApp me Ctrl+V karein.", "OK", "document.getElementById('toast').style.display='none'"); return true; }
   catch (e) { toast("Image copy nahi hui. 'Download' se save karke attach karein.", "OK", "document.getElementById('toast').style.display='none'"); return false; }
 }
+function waGo(){ if (WAQ) window.open(WAQ.wa, "_blank"); }
 async function waOpen(){
-  if (!WAQ) return; const q = WAQ, w = window.open("about:blank", "_blank");
+  if (!WAQ) return;
   await waCopyImg();
-  const url = "https://wa.me/" + q.n + "?text=" + encodeURIComponent(waText(q.c, q.amt, q.u));
-  if (w) w.location.href = url; else window.open(url, "_blank");
+  const w = window.open(WAQ.wa, "_blank");
+  if (!w) toast("Browser ne naya tab roka. WhatsApp kholne ke liye ye button dabayein.", "WhatsApp kholein", "waGo()");
 }
 async function waShare(){
   if (!WAQ) return;
@@ -1475,7 +1483,7 @@ function vJob(){
   <div class="cards">${JST.map(k => `<div class="c" style="cursor:pointer" title="${k} kaam dekhein" onclick="JF='${k}';r()"><small>${k}</small><b class="${k === "Delivered" ? "g" : k === "Pending" ? "r" : ""}">${cnt(k)}</b></div>`).join("")}</div>
   <div class="box"><div class="row">${F("Date", `<input type="date" id="jd" value="${today()}">`)}${cbHtml("jc", "Customer (naam likhein ya chunein)")}</div>
   <div class="row" id="jwalk" style="margin-top:10px">${F("Customer ka naam (Walk-in ho to) *", `<input id="jn" style="width:260px">`)}</div>
-  <div class="row" style="margin-top:10px">${F("Mobile", `<input id="jp" style="width:150px">`)}${F("Service / Form ka naam *", `<input id="js" list="sl" style="width:240px">`)}${F("Application / Ack number", `<input id="ja" style="width:190px">`)}${F("Status", `<select id="jt">${JST.map(k => `<option>${k}</option>`).join("")}</select>`)}${F("Note", `<input id="jo" style="width:260px">`)}<button class="b" onclick="saveJob()">Add job</button><button class="b" onclick="saveJob(true)">Add job + WhatsApp confirmation</button></div></div>
+  <div class="row" style="margin-top:10px">${F("Mobile", `<input id="jp" style="width:150px">`)}${F("Service / Form ka naam *", `<input id="js" list="sl" style="width:240px">`)}${F("Application / Ack number", `<input id="ja" style="width:190px">`)}${F("Status", `<select id="jt">${JST.map(k => `<option>${k}</option>`).join("")}</select>`)}${F("Note", `<input id="jo" style="width:260px">`)}<button class="b" onclick="saveJob()">Add job</button><button class="b" onclick="saveJob(true)">Add job + WhatsApp message</button></div></div>
   <div class="box"><div class="row" style="margin-bottom:10px">${F("Status filter", `<select onchange="JF=this.value;jTbl()"><option value="open"${JF === "open" ? " selected" : ""}>Baaki kaam (Delivered ke alawa)</option><option value="Pending"${JF === "Pending" ? " selected" : ""}>Pending</option><option value="In Process"${JF === "In Process" ? " selected" : ""}>In Process</option><option value="Ready"${JF === "Ready" ? " selected" : ""}>Ready</option><option value="Delivered"${JF === "Delivered" ? " selected" : ""}>Delivered (Completed)</option><option value="all"${JF === "all" ? " selected" : ""}>Sab</option></select>`)}${F("Search (naam, mobile, service, ack no, note)", `<input id="jq" value="${h(JQ)}" oninput="JQ=this.value;jTbl()" style="width:320px">`)}${F("From", `<input type="date" id="jdf" onchange="jTbl()">`)}${F("To", `<input type="date" id="jdt" onchange="jTbl()">`)}${dBtns("jdf", "jdt", "jTbl")}<button class="g2" onclick="JF='open';JQ='';r()">Reset</button></div><div id="jtbl"></div></div>`;
 }
 function jcWalk(){ const e = $("jwalk"); if (e) e.style.display = v("jc") ? "none" : "flex"; }
@@ -1484,19 +1492,24 @@ function saveJob(wa){
   const c = v("jc") && D.customers.find(x => x.id === v("jc")), nm = c ? c.name : v("jn").trim(), svc = v("js").trim();
   if (need(nm && svc, "Customer ka naam (Walk-in ho to) aur service ka naam bharein.")) return;
   const nj = { id: uid(), d: v("jd") || today(), cid: c ? c.id : "", cname: nm, phone: v("jp").trim(), svc, ack: v("ja").trim(), st: v("jt"), note: v("jo").trim(), upd: today() };
-  D.jobs.push(nj); save(); r(); if (wa) jobWa(nj.id, "c");
+  D.jobs.push(nj); save(); r(); if (wa) jobWa(nj.id);
 }
 function copyAck(id){ const j = D.jobs.find(x => x.id === id); if (j && j.ack) copyTxt(j.ack); }
-function jobSt(id, st){ const j = D.jobs.find(x => x.id === id); if (!j) return; j.st = st; j.upd = today(); save(); r(); }
-function jobWa(id, kind){
+function jobSt(id, st){ const j = D.jobs.find(x => x.id === id); if (!j) return; j.st = st; j.upd = today(); save(); r(); if ((st === "Ready" || st === "Delivered") && waNum(j.phone) && confirm("Customer ko WhatsApp par \"" + st + "\" ka message bhejein?")) jobWa(id); }
+function jobMsg(j){
+  const nm = D.shop.name || "APNA CSC", ack = j.ack ? "\nApplication / Ack No: " + j.ack : "";
+  if (j.st === "Ready") return "Namaste " + j.cname + ",\naapka " + j.svc + " ready ho gaya hai. Kripya " + nm + " par aakar le jayein." + ack + "\nDhanyavaad.";
+  if (j.st === "Delivered") return "Namaste " + j.cname + ",\naapka " + j.svc + " aapko de diya gaya hai." + ack + "\nDhanyavaad, " + nm + " me dobara zaroor padharein.";
+  return "Namaste " + j.cname + ",\naapka " + j.svc + " ka form/application " + nm + " se submit ho gaya hai." + ack + "\nStatus ki jaankari hum aapko batayenge. Dhanyavaad.";
+}
+function jobWa(id){
   const j = D.jobs.find(x => x.id === id), n = j && waNum(j.phone); if (!n) return alert("Sahi mobile number nahi hai.");
-  const msg = kind === "c" ? "Namaste " + j.cname + ", aapka " + j.svc + " ka form/application " + D.shop.name + " se submit ho gaya hai." + (j.ack ? "\nApplication / Ack No: " + j.ack : "") + "\nStatus ki jaankari hum aapko batayenge. Dhanyavaad." : "Namaste " + j.cname + ", aapka " + j.svc + " ka kaam taiyar hai. Kripya " + D.shop.name + " par aakar le jayein. Dhanyavaad.";
-  window.open("https://wa.me/" + n + "?text=" + encodeURIComponent(msg), "_blank");
+  window.open("https://wa.me/" + n + "?text=" + encodeURIComponent(jobMsg(j)), "_blank");
 }
 function jTbl(){
   const q = JQ.toLowerCase(), f = v("jdf"), t = v("jdt");
   const rs = D.jobs.filter(j => (!f || j.d >= f) && (!t || j.d <= t) && (JF === "all" || (JF === "open" ? (q || f || t || j.st !== "Delivered") : j.st === JF)) && (!q || [j.cname, j.phone, j.svc, j.ack, j.note, fd(j.d)].join(" ").toLowerCase().includes(q))).sort((a, b) => b.d.localeCompare(a.d) || b.id.localeCompare(a.id));
-  $("jtbl").innerHTML = `<p class="m">${rs.length} jobs${JF === "open" && (q || f || t) ? " (search / date me Delivered bhi shamil)" : ""}</p>` + T(["Date", "Customer", "Mobile", "Service", "Ack no", "Status", "Note", ""], rs.map(j => RC(j.st === "Delivered" ? "gr" : j.st === "Pending" ? "rd" : "", fd(j.d), j.cid ? `<button class="lk" onclick="openLedger('${j.cid}')">${h(j.cname)}</button>` : h(j.cname), h(j.phone), h(j.svc), (j.ack ? h(j.ack) + ` <button class="x" style="color:var(--p)" onclick="copyAck('${j.id}')">📋 Copy</button>` : ""), `<select onchange="jobSt('${j.id}',this.value)">${JST.map(k => `<option${k === j.st ? " selected" : ""}>${k}</option>`).join("")}</select>${j.st === "Delivered" && j.upd ? `<br><small>${fd(j.upd)}</small>` : ""}`, h(j.note), (waNum(j.phone) ? `<button class="x" style="color:var(--g)" onclick="jobWa('${j.id}','c')">📲 Confirm</button> ` : "") + (j.st === "Ready" && waNum(j.phone) ? `<button class="x" style="color:var(--g)" onclick="jobWa('${j.id}','r')">📲 Ready</button> ` : "") + X("jobs", j.id))));
+  $("jtbl").innerHTML = `<p class="m">${rs.length} jobs${JF === "open" && (q || f || t) ? " (search / date me Delivered bhi shamil)" : ""}</p>` + T(["Date", "Customer", "Mobile", "Service", "Ack no", "Status", "Note", ""], rs.map(j => RC(j.st === "Delivered" ? "gr" : j.st === "Pending" ? "rd" : "", fd(j.d), j.cid ? `<button class="lk" onclick="openLedger('${j.cid}')">${h(j.cname)}</button>` : h(j.cname), h(j.phone), h(j.svc), (j.ack ? h(j.ack) + ` <button class="x" style="color:var(--p)" onclick="copyAck('${j.id}')">📋 Copy</button>` : ""), `<select onchange="jobSt('${j.id}',this.value)">${JST.map(k => `<option${k === j.st ? " selected" : ""}>${k}</option>`).join("")}</select>${j.st === "Delivered" && j.upd ? `<br><small>${fd(j.upd)}</small>` : ""}`, h(j.note), (waNum(j.phone) ? `<button class="x" style="color:var(--g)" onclick="jobWa('${j.id}')">📲 ${j.st === "Ready" ? "Ready" : j.st === "Delivered" ? "Delivered" : "Confirm"}</button> ` : "") + X("jobs", j.id))));
 }
 
 /* ---------- Galla tally (cash drawer) ---------- */
@@ -1613,6 +1626,8 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.classList && e.target.classList.contains("amt")) { const st = calcField(e.target); if (st === "changed" || st === "bad") { e.preventDefault(); return; } }
   if (e.key === "Enter" && e.target.matches("input:not([type=file])")) { const b = e.target.closest(".row, .mb, .sb"); const bt = b && b.querySelector(".b"); if (bt) { e.preventDefault(); bt.click(); } }
 });
+const APP_VER = "V34", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
+{ const e = $("ver"); if (e) e.textContent = verTxt(); document.querySelectorAll("#setup .sb,#lock .sb").forEach(x => { x.dataset.v = verTxt(); }); }
 boot();
 </script>
 </body>
