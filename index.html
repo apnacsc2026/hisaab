@@ -506,7 +506,7 @@ function vDash(){
   const udhR = ts.filter(s => s.amt > s.rec).map(s => R(`<button class="lk" onclick="openLedger('${s.cid || "W"}')">${h(cn(s.cid))}</button>`, h(s.svc), h(s.rmk || ""), m(s.amt), m(s.rec), `<b class="r">${m(r2(s.amt - s.rec))}</b>`));
   if (tUdh > 0) udhR.push(RC("tt", "Aaj ka kul udhaar", "", "", "", "", `<b class="r">${m(tUdh)}</b>`));
   const inc = {}, exc = {};
-  D.sales.filter(s => inFY(s.d)).forEach(s => { const k = s.svc.trim().toLowerCase(), z = inc[k] = inc[k] || { n: s.svc.trim(), c: 0, b: 0, g: 0 }; z.c++; z.b = r2(z.b + (sFee(s) > 0 ? sSvc(s) : s.amt) * nfS(s)); z.g = r2(z.g + incSale(s)); });
+  D.sales.filter(s => inFY(s.d)).forEach(s => { const k = s.svc.trim().toLowerCase(), z = inc[k] = inc[k] || { n: s.svc.trim(), c: 0, b: 0, g: 0 }; z.c++; z.b = r2(z.b + svcNet(s)); z.g = r2(z.g + incSale(s)); });
   const addE = (name, a) => { const k = name.trim().toLowerCase(), z = exc[k] = exc[k] || { n: name.trim(), a: 0 }; z.a = r2(z.a + a); };
   D.expenses.filter(e => inFY(e.d)).forEach(e => addE(e.cat, e.amt - (e.itc || 0)));
   D.ptx.filter(t => t.kind === "paid" && inFY(t.d)).forEach(t => addE((D.parties.find(p => p.id === t.pid) || {}).type || "Other", t.amt));
@@ -906,7 +906,7 @@ function printDay(){
 function printCust(){
   const c = L === "W" ? WALK : D.customers.find(x => x.id === L); if (!c) return;
   const { rows, open, close } = cLedRows(), per = !!(LF || LT), asc = rows.slice().reverse();
-  const list = [...(per || open ? [R(LF ? fd(LF) : "", "<b>Opening balance (pichla baaki)</b>", "", "", `<b>${m(open)}</b>`)] : []), ...asc.map(x => R(fd(x.d), h(x.t), x.dr ? `<span class="r">${m(x.dr)}</span>` : "", x.cr ? `<span class="g">${m(x.cr)}</span>` : "", m(x.b))), RC("tt", "", "Total", `<span class="r">${m(sumR(rows, "dr"))}</span>`, `<span class="g">${m(sumR(rows, "cr"))}</span>`, m(close))];
+  const list = [...(per || open ? [R(LF ? fd(LF) : "", "<b>Opening balance (pichla baaki)</b>", "", "", `<b>${m(open)}</b>`)] : []), ...asc.map(x => R(fd(x.d), h(x.tp || x.t), x.dr ? `<span class="r">${m(x.dr)}</span>` : "", x.cr ? `<span class="g">${m(x.cr)}</span>` : "", m(x.b))), RC("tt", "", "Total", `<span class="r">${m(sumR(rows, "dr"))}</span>`, `<span class="g">${m(sumR(rows, "cr"))}</span>`, m(close))];
   const sub = h(c.phone) + " " + h(c.addr) + (per ? " | Statement: " + (LF ? fd(LF) : "shuru") + " se " + (LT ? fd(LT) : "aaj") + " tak" : "");
   printDoc("Customer ledger: " + h(c.name), sub, ["Date", "Detail", "Charge", "Paid", "Balance"], list, `Closing balance${LT ? " (" + fd(LT) + " tak)" : ""}: <b>${m(close)}</b> (${balLbl(close)})` + (per && r2(close - cbal(L)) ? `<br>Maujooda kul balance: <b>${m(cbal(L))}</b>` : ""), "Ledger-" + c.name);
 }
@@ -1091,9 +1091,9 @@ function words(n){
 }
 
 /* ---------- Receipt / Invoice ---------- */
-let IL = [{ svc: "", rmk: "", amt: "", disc: "", rate: "" }], IS = null, rrAuto = true;
-function iReset(){ IL = [{ svc: "", rmk: "", amt: "", disc: "", rate: "" }]; IS = { gstin: "", pos: D.gst.state, mode: D.gst.mode }; rrAuto = true; }
-let EI = null, TH = "80";
+let IL = [{ svc: "", rmk: "", amt: "", fee: "", disc: "", rate: "" }], IS = null, rrAuto = true;
+function iReset(){ IL = [{ svc: "", rmk: "", amt: "", fee: "", disc: "", rate: "" }]; IS = { gstin: "", pos: D.gst.state, mode: D.gst.mode }; rrAuto = true; IDISC = ""; }
+let EI = null, TH = "80", IDISC = "";
 const invOnFlag = d => EI ? !!(D.inv.find(x => x.id === EI) || {}).on : gstOnFor(d);
 function thSet(x){ TH = x; D.ui = D.ui || { sec: {} }; D.ui.th = x; save(); }
 function vInv(){
@@ -1108,7 +1108,7 @@ function vInv(){
   ${quickBar("i")}<div class="row">${F("Date", `<input type="date" id="rd" value="${e ? e.d : lastD}" onchange="ilRender()">`)}${cbHtml("rc", "Customer (naam likhein ya chunein)", e ? e.cid : "", e ? (c ? c.name : "Walk-in") : "Walk-in")}</div>
   <div class="row" id="rwalk" style="margin-top:10px">${F("Customer ka naam *", `<input id="rwn" value="${h(e && !e.cid ? e.cname : "")}" style="width:230px">`)}${F("Mobile", `<input id="rwp" value="${h(e && !e.cid ? e.cphone : "")}" style="width:150px">`)}${F("Address *", `<input id="rwa" value="${h(e && !e.cid ? e.caddr : "")}" style="width:340px">`)}</div>
   <div id="rgst"></div><div id="rlines" style="margin:12px 0"></div>
-  <div class="row">${F("Received (₹)", `<input type="text" inputmode="decimal" class="amt" id="rr" value="${e ? e.rec : ""}" style="width:130px" oninput="rrAuto=false">`)}${F("Mode", `<select id="rpm"><option${e && e.pmode === "UPI" ? "" : " selected"}>Cash</option><option${e && e.pmode === "UPI" ? " selected" : ""}>UPI</option></select>`)}${F("Note (receipt par)", `<input id="rn" value="${h(e ? e.note : "")}" style="width:260px">`)}${e ? F("Edit ka kaaran / Badlav ka reason *", `<input id="rer" style="width:340px" placeholder="Jaise: amount galat bhara tha">`) : ""}</div>
+  <div class="row">${F("Discount (10% ya ₹50, poore bill par)", `<input type="text" id="rdisc" value="${h(IDISC)}" placeholder="0" style="width:150px" oninput="IDISC=this.value;ilTot()">`)}${F("Received (₹)", `<input type="text" inputmode="decimal" class="amt" id="rr" value="${e ? e.rec : ""}" style="width:130px" oninput="rrAuto=false">`)}${F("Mode", `<select id="rpm"><option${e && e.pmode === "UPI" ? "" : " selected"}>Cash</option><option${e && e.pmode === "UPI" ? " selected" : ""}>UPI</option></select>`)}${F("Note (receipt par)", `<input id="rn" value="${h(e ? e.note : "")}" style="width:260px">`)}${e ? F("Edit ka kaaran / Badlav ka reason *", `<input id="rer" style="width:340px" placeholder="Jaise: amount galat bhara tha">`) : ""}</div>
   <div id="rtot"></div>
   <div class="row" style="margin-top:12px">${e ? `<button class="b" onclick="saveInv(false)">Update invoice</button><button class="b" onclick="saveInv('a4')">Update + Print A4</button><button class="b" onclick="saveInv('th')">Update + Thermal</button>` : `<button class="b" onclick="saveInv(false)">Save</button><button class="b" onclick="saveInv('a4')">Save + Print A4</button><button class="b" onclick="saveInv('th')">Save + Thermal (${TH} mm)</button>`}</div></div>
   <div class="box"><div class="row">${F("Search (number, naam, amount)", `<input id="iq" oninput="iTbl()" style="width:280px">`)}${F("Thermal paper", `<select onchange="thSet(this.value)"><option value="80"${TH === "80" ? " selected" : ""}>80 mm</option><option value="58"${TH === "58" ? " selected" : ""}>58 mm</option></select>`)}${F("From", `<input type="date" id="idf" onchange="iTbl()">`)}${F("To", `<input type="date" id="idt" onchange="iTbl()">`)}${dBtns("idf", "idt", "iTbl")}<button class="g2" onclick="clrI()">Clear all filters</button></div><div id="itbl"></div></div>`;
@@ -1116,7 +1116,8 @@ function vInv(){
 function editInv(id){
   const i = D.inv.find(x => x.id === id); if (!i || i.canc) return;
   EI = id;
-  IL = i.lines.map(l => ({ svc: l.svc, rmk: l.rmk || "", amt: String(l.gross != null ? l.gross : (i.incl || !i.on ? l.total : l.taxable)), disc: l.dtxt || "", rate: i.on && l.rate ? String(l.rate) : "" }));
+  IL = i.lines.map(l => ({ svc: l.svc, rmk: l.rmk || "", amt: String(l.gross != null ? r2(l.gross + (l.fee || 0)) : (i.incl || !i.on ? l.total : l.taxable)), fee: l.fee ? String(l.fee) : "", disc: l.dtxt || "", rate: i.on && l.rate ? String(l.rate) : "" }));
+  IDISC = i.dtxt || (i.disc ? String(i.disc) : (r2(i.lines.reduce((a, l) => a + (l.disc || 0), 0)) ? String(r2(i.lines.reduce((a, l) => a + (l.disc || 0), 0))) : ""));
   IS = { gstin: i.gstin || "", pos: i.pos || D.gst.state, mode: i.incl ? "incl" : "excl" }; rrAuto = false;
   V = "inv"; r(); window.scrollTo && window.scrollTo(0, 0);
 }
@@ -1124,8 +1125,8 @@ function rcPicked(){ const c = D.customers.find(x => x.id === v("rc")); if (c &&
 function rcWalk(){ const e = $("rwalk"); if (e) e.style.display = v("rc") ? "none" : "flex"; }
 function ilRender(){
   const d = v("rd") || lastD, on = invOnFlag(d);
-  $("rgst").innerHTML = on ? `<div class="row" style="margin-top:10px">${F("Customer ka GSTIN (B2B ho to)", `<input id="rg" value="${h(IS.gstin)}" maxlength="15" style="width:190px;text-transform:uppercase" oninput="IS.gstin=this.value.toUpperCase();ilTot()">`)}${F("Place of supply (state)", `<select id="rp" onchange="IS.pos=this.value;ilTot()">${STATES.map(([c, n]) => `<option value="${c}"${c === IS.pos ? " selected" : ""}>${c} - ${n}</option>`).join("")}</select>`)}${F("Amount mein GST", `<select id="rm" onchange="IS.mode=this.value;ilTot()"><option value="incl"${IS.mode === "incl" ? " selected" : ""}>Shamil hai (inclusive)</option><option value="excl"${IS.mode === "excl" ? " selected" : ""}>Upar se jodein (exclusive)</option></select>`)}</div>` : `<p class="m">${D.gst.on ? "Is tareekh par GST lagu nahi hai" : "GST band hai"}: sirf Payment Receipt banegi.</p>`;
-  $("rlines").innerHTML = `<div class="w"><table><tr><th>Service</th><th>Description / Remark</th><th>Amount</th><th>Discount (10% ya ₹50)</th>${on ? "<th>GST %</th>" : ""}<th></th></tr>${IL.map((l, i) => `<tr><td><input${i === 0 ? ' id="rs"' : ""} list="sl" value="${h(l.svc)}" style="width:210px" oninput="IL[${i}].svc=this.value;ilTot()"></td><td><input value="${h(l.rmk)}" style="width:100%;min-width:220px" oninput="IL[${i}].rmk=this.value"></td><td><input type="text" inputmode="decimal" class="amt" value="${h(l.amt)}" style="width:110px" oninput="IL[${i}].amt=this.value;ilTot()"></td><td><input type="text" value="${h(l.disc)}" placeholder="0" style="width:120px" oninput="IL[${i}].disc=this.value;ilTot()"></td>${on ? `<td><input type="number" min="0" step="0.01" value="${h(l.rate)}" placeholder="${h(svcRate(l.svc.trim()))}" style="width:80px" oninput="IL[${i}].rate=this.value;ilTot()"></td>` : ""}<td>${IL.length > 1 ? `<button class="x" onclick="IL.splice(${i},1);ilRender()">✕</button>` : ""}</td></tr>`).join("")}</table></div><button class="g2" style="margin-top:8px" onclick="IL.push({svc:'',rmk:'',amt:'',disc:'',rate:''});ilRender()">+ Line jodein</button>`;
+  $("rgst").innerHTML = on ? `<div class="row" style="margin-top:10px">${F("Customer ka GSTIN (B2B ho to)", `<input id="rg" value="${h(IS.gstin)}" maxlength="15" style="width:190px;text-transform:uppercase" oninput="IS.gstin=this.value.toUpperCase();ilTot()">`)}${F("Place of supply (state)", `<select id="rp" onchange="IS.pos=this.value;ilTot()">${STATES.map(([c, n]) => `<option value="${c}"${c === IS.pos ? " selected" : ""}>${c} - ${n}</option>`).join("")}</select>`)}${F("Amount mein GST", `<select id="rm" onchange="IS.mode=this.value;ilTot()"><option value="incl"${IS.mode === "incl" ? " selected" : ""}>Shamil hai (inclusive)</option><option value="excl"${IS.mode === "excl" ? " selected" : ""}>Upar se jodein (exclusive)</option></select>`)}</div><p class="m" style="margin-top:6px">GST poore amount par lagega (fees samet). Fees receipt/invoice par nahi chhapti, sirf aapke hisaab me rehti hai.</p>` : `<p class="m">${D.gst.on ? "Is tareekh par GST lagu nahi hai" : "GST band hai"}: sirf Payment Receipt banegi.</p>`;
+  $("rlines").innerHTML = `<div class="w"><table><tr><th>Service</th><th>Description / Remark</th><th>Total Lena (customer se)</th><th>Fees / Govt. Fees / Other (customer ka kharcha)</th><th>Service Charge (meri income)</th>${on ? "<th>GST %</th>" : ""}<th></th></tr>${IL.map((l, i) => `<tr><td><input${i === 0 ? ' id="rs"' : ""} list="sl" value="${h(l.svc)}" style="width:160px" oninput="IL[${i}].svc=this.value;ilTot()"></td><td><input value="${h(l.rmk)}" style="width:100%;min-width:150px" oninput="IL[${i}].rmk=this.value"></td><td><input type="text" inputmode="decimal" class="amt" value="${h(l.amt)}" style="width:120px" oninput="ilSet(${i},'amt',this.value)"></td><td><input type="text" inputmode="decimal" class="amt" id="ilf${i}" value="${h(l.fee || "")}" style="width:140px" oninput="ilSet(${i},'fee',this.value)"></td><td><input type="text" inputmode="decimal" class="amt" id="ilv${i}" value="${h(ilSvcVal(l))}" style="width:120px;font-weight:700" oninput="ilSet(${i},'svc',this.value)" onblur="ilTot()"></td>${on ? `<td><input type="number" min="0" step="0.01" value="${h(l.rate)}" placeholder="${h(svcRate(l.svc.trim()))}" style="width:80px" oninput="IL[${i}].rate=this.value;ilTot()"></td>` : ""}<td>${IL.length > 1 ? `<button class="x" onclick="IL.splice(${i},1);ilRender()">✕</button>` : ""}</td></tr>`).join("")}</table></div><button class="g2" style="margin-top:8px" onclick="IL.push({svc:'',rmk:'',amt:'',fee:'',disc:'',rate:''});ilRender()">+ Line jodein</button>`;
   ilTot();
 }
 /* discount: "10%" = percent of amount, "50" ya "₹50" = flat rupees */
@@ -1136,11 +1137,36 @@ function discAmt(txt, base){
 }
 function invLines(){
   const d = v("rd") || lastD, on = invOnFlag(d), intra = IS.pos === D.gst.state, incl = IS.mode === "incl";
-  return IL.filter(l => N(l.amt) > 0).map(l => { const svc = l.svc.trim(), rate = l.rate === "" ? svcRate(svc) : N(l.rate); return { svc, rmk: l.rmk.trim(), sac: svcSac(svc), ...(() => { const gross = r2(N(l.amt)), disc = discAmt(l.disc, gross), pct = String(l.disc || "").replace(/[\s]/g, "").endsWith("%"); return { gross, disc, dtxt: disc ? (pct ? String(l.disc).replace(/\s/g, "") : m(disc)) : "", ...calcLine(r2(gross - disc), rate, incl, intra, on) }; })() }; });
+  const rows = IL.filter(l => N(l.amt) > 0).map(l => { const T = r2(N(l.amt)), fee = Math.max(0, Math.min(r2(N(l.fee)), T)); return { l, T, fee, S: r2(T - fee) }; });
+  const sumT = r2(rows.reduce((a, x) => a + x.T, 0)), sumS = r2(rows.reduce((a, x) => a + x.S, 0)), dtxt = String(IDISC || "").replace(/\s/g, ""), want = discAmt(dtxt, sumT), Dd = Math.min(want, sumS);
+  let left = Dd;
+  const ls = rows.map((x, k) => {
+    const share = sumS > 0 ? (k === rows.length - 1 ? left : Math.min(left, r2(Dd * x.S / sumS))) : 0, disc = Math.min(share, x.S); left = r2(left - disc);
+    const svc = x.l.svc.trim(), rate = x.l.rate === "" ? svcRate(svc) : N(x.l.rate), c = calcLine(r2(x.T - disc), rate, incl, intra, on);
+    return { svc, rmk: x.l.rmk.trim(), sac: svcSac(svc), fee: x.fee, gross: x.S, disc, dtxt: "", ...c };
+  });
+  ls.D = r2(ls.reduce((a, x) => a + x.disc, 0)); ls.dtxt = dtxt; ls.bad = want > sumS + 0.001;
+  return ls;
+}
+const ilSvcVal = l => l.sv ? l.sv : (N(l.amt) > 0 ? String(Math.max(0, r2(N(l.amt) - N(l.fee)))) : "");
+function ilSet(i, k, val){
+  const l = IL[i], a = N(l.amt);
+  if (k === "amt") { l.amt = val; if (l.sv && N(l.fee) === 0 && N(val) > 0 && N(l.sv) <= N(val)) { l.fee = String(r2(N(val) - N(l.sv))); l.sv = ""; } }
+  else if (k === "fee") { l.fee = val; l.sv = ""; }
+  else if (!String(val).trim()) { l.sv = ""; l.fee = ""; }
+  else if (a > 0 && N(val) <= a) { const f = r2(a - N(val)); l.fee = f > 0 ? String(f) : ""; l.sv = ""; }
+  else l.sv = val;
+  ilTot();
 }
 function ilTot(){
-  const ls = invLines(), T = k => r2(ls.reduce((a, x) => a + x[k], 0)), tot = T("total"), intra = IS.pos === D.gst.state;
-  $("rtot").innerHTML = ls.length ? `<p class="m">${T("tax") ? "Taxable " + m(T("taxable")) + " | GST " + m(T("tax")) + (intra ? " (CGST " + m(T("cgst")) + " + SGST " + m(T("sgst")) + ")" : " (IGST)") + " | " : ""}${T("disc") ? `<span class="g">Discount -${m(T("disc"))}</span> | ` : ""}<b>Kul ${m(tot)}</b></p>` : "";
+  IL.forEach((l, i) => {
+    const sv = $("ilv" + i), fe = $("ilf" + i), bad = N(l.fee) > N(l.amt) || (l.sv && N(l.sv) > N(l.amt));
+    if (sv && document.activeElement !== sv) sv.value = ilSvcVal(l);
+    if (fe && document.activeElement !== fe) fe.value = l.fee || "";
+    if (sv) sv.style.color = bad ? "#c0392b" : "";
+  });
+  const ls = invLines(), T = k => r2(ls.reduce((a, x) => a + x[k], 0)), tot = T("total"), intra = IS.pos === D.gst.state, fees = T("fee");
+  $("rtot").innerHTML = ls.length ? `<p class="m">${T("tax") ? "Taxable " + m(T("taxable")) + " | GST " + m(T("tax")) + (intra ? " (CGST " + m(T("cgst")) + " + SGST " + m(T("sgst")) + ")" : " (IGST)") + " | " : ""}${T("disc") ? `<span class="g">Discount -${m(T("disc"))}</span> | ` : ""}${ls.bad ? `<b class="r">⚠ Discount aapke service charge se zyada hai | </b>` : ""}${fees ? `Meri income ${m(r2(T("taxable") - fees))} | Fees (customer ka, receipt par nahi) ${m(fees)} | ` : ""}${fees && T("taxable") - fees < 0 ? `<b class="r">⚠ GST ke baad aapki income minus ho rahi hai | </b>` : ""}<b>Kul ${m(tot)}</b></p>` : "";
   if (rrAuto) $("rr").value = tot || "";
 }
 function saveInv(pr){
@@ -1157,30 +1183,32 @@ function saveInv(pr){
   if (c && gstin && !c.gstin && confirm("Is customer ke master mein GSTIN save kar dein? (agli baar apne aap aa jayega)")) c.gstin = gstin;
   const total = r2(ls.reduce((a, l) => a + l.total, 0)), rec = Math.max(0, Math.min(N(v("rr")), total)), pm = v("rpm");
   if (need(total > 0, "Discount ke baad kul amount 0 ho gaya. Discount kam karein.")) return;
+  if (need(!ls.bad, "Discount aapke service charge (fees ke alawa wala hissa) se zyada nahi ho sakta. Discount kam karein.")) return;
+  if (need(IL.every(l => N(l.fee) <= N(l.amt) && !(l.sv && N(l.sv) > N(l.amt))), "Fees ya Service Charge, Total Lena se zyada nahi ho sakta.")) return;
   if (N(v("rr")) > total && !confirm("Received (" + m(N(v("rr"))) + ") kul amount (" + m(total) + ") se zyada hai. Sirf " + m(total) + " record hoga. Aage badhein?")) return;
-  const rmkOf = (l, no) => { const rm = [l.rmk, l.disc ? "Discount " + l.dtxt + " (-" + m(l.disc) + ")" : ""].filter(Boolean).join(" | "); return (rm + (c ? "" : (rm ? " | " : "") + nm + (ph ? " " + ph : "")) + " [" + no + "]").trim(); };
+  const rmkOf = (l, no) => { const rm = [l.rmk, l.disc ? "Discount (-" + m(l.disc) + ")" : ""].filter(Boolean).join(" | "); return (rm + (c ? "" : (rm ? " | " : "") + nm + (ph ? " " + ph : "")) + " [" + no + "]").trim(); };
   let id, no;
   if (old) {
     id = old.id; no = old.no; const prev = old.total, base = uid(), olds = old.sids.map(x => D.sales.find(s => s.id === x)), sids = []; let left = rec;
     ls.forEach((l, k) => {
       const part = Math.min(left, l.total); left = r2(left - part);
-      const row = { d, svc: l.svc, rmk: rmkOf(l, no), amt: l.total, rec: part, cid: c ? c.id : "", mode: pm, invId: id, gst: l.tax };
+      const row = { d, svc: l.svc, rmk: rmkOf(l, no), amt: l.total, fee: l.fee, rec: part, cid: c ? c.id : "", mode: pm, invId: id, gst: l.tax };
       if (olds[k]) { Object.assign(olds[k], row); sids.push(olds[k].id); } else { const sid = base + String(k).padStart(2, "0"); D.sales.push({ id: sid, ...row }); sids.push(sid); }
       if (!D.svc.includes(l.svc)) D.svc.push(l.svc);
     });
     old.sids.slice(ls.length).forEach(x => { D.sales = D.sales.filter(s => s.id !== x); });
     const at = new Date().toISOString(), why = v("rer").trim();
-    Object.assign(old, { d, cid: c ? c.id : "", cname: nm, caddr: ad, cphone: ph, gstin, pos: IS.pos, incl: IS.mode === "incl", lines: ls, sids, total, rec, pmode: pm, note: v("rn"), editedOn: at, editReason: why, previousTotal: prev });
+    Object.assign(old, { d, cid: c ? c.id : "", cname: nm, caddr: ad, cphone: ph, gstin, pos: IS.pos, incl: IS.mode === "incl", lines: ls, disc: ls.D, dtxt: ls.dtxt, sids, total, rec, pmode: pm, note: v("rn"), editedOn: at, editReason: why, previousTotal: prev });
     old.edits = [...(old.edits || []), { on: at, reason: why, prevTotal: prev, newTotal: total }];
     EI = null;
   } else {
     const kind = on ? "INV" : "RC"; no = nextNo(kind, d); id = uid(); const base = uid(), sids = []; let left = rec;
     ls.forEach((l, k) => {
       const part = Math.min(left, l.total); left = r2(left - part); const sid = base + String(k).padStart(2, "0"); sids.push(sid);
-      D.sales.push({ id: sid, d, svc: l.svc, rmk: rmkOf(l, no), amt: l.total, rec: part, cid: c ? c.id : "", mode: pm, invId: id, gst: l.tax });
+      D.sales.push({ id: sid, d, svc: l.svc, rmk: rmkOf(l, no), amt: l.total, fee: l.fee, rec: part, cid: c ? c.id : "", mode: pm, invId: id, gst: l.tax });
       if (!D.svc.includes(l.svc)) D.svc.push(l.svc);
     });
-    D.inv.push({ id, no, kind, on, d, cid: c ? c.id : "", cname: nm, caddr: ad, cphone: ph, gstin, pos: IS.pos, incl: IS.mode === "incl", lines: ls, sids, total, rec, pmode: pm, note: v("rn"), canc: false });
+    D.inv.push({ id, no, kind, on, d, cid: c ? c.id : "", cname: nm, caddr: ad, cphone: ph, gstin, pos: IS.pos, incl: IS.mode === "incl", lines: ls, disc: ls.D, dtxt: ls.dtxt, sids, total, rec, pmode: pm, note: v("rn"), canc: false });
   }
   lastD = d; if (FY !== "all" && fyOf(d) !== FY) FY = fyOf(d);
   iReset(); save(); r(); if (pr) printInv(id, pr === "th" ? TH : "a4");
@@ -1202,18 +1230,18 @@ function cancelInv(id){
 function printInv(id, mode){
   const i = D.inv.find(x => x.id === id); if (!i) return; mode = mode || "a4";
   const g = i.on, title = i.canc ? "CANCELLED" : g ? "TAX INVOICE" : "PAYMENT RECEIPT", sh = D.shop, inter = i.lines.some(l => l.igst);
-  const T_ = k => r2(i.lines.reduce((a, x) => a + x[k], 0)), due = r2(i.total - i.rec), tdisc = r2(i.lines.reduce((a, x) => a + (x.disc || 0), 0)), rev = i.editedOn ? fd(i.editedOn.slice(0, 10)) : "";
+  const fe = l => l.fee || 0, T_ = k => r2(i.lines.reduce((a, x) => a + (x[k] || 0), 0)), due = r2(i.total - i.rec), tdisc = r2(i.lines.reduce((a, x) => a + (x.disc || 0), 0)), rev = i.editedOn ? fd(i.editedOn.slice(0, 10)) : "";
   if (mode === "a4") {
-    const rows = i.lines.map((l, n) => `<tr><td>${n + 1}</td><td>${h(l.svc)}${l.rmk ? `<br><small>${h(l.rmk)}</small>` : ""}${l.disc ? `<br><small>Amount ${m(l.gross)} | Discount ${h(l.dtxt)}: -${m(l.disc)}</small>` : ""}</td>${g ? `<td>${h(l.sac || "")}</td>` : ""}<td class="n">${m(l.taxable)}</td>${g ? `<td class="n">${l.rate}%</td><td class="n">${m(l.tax)}</td>` : ""}<td class="n">${m(l.total)}</td></tr>`).join("");
+    const rows = i.lines.map((l, n) => `<tr><td>${n + 1}</td><td>${h(l.svc)}${l.rmk ? `<br><small>${h(l.rmk)}</small>` : ""}</td>${g ? `<td>${h(l.sac || "")}</td>` : ""}<td class="n">${m(g ? l.taxable : r2(l.gross + fe(l)))}</td>${g ? `<td class="n">${l.rate}%</td><td class="n">${m(l.tax)}</td><td class="n">${m(l.total)}</td>` : ""}</tr>`).join("");
     $("pr").innerHTML = `<div class="inv">
   <div class="ih"><div><h2>${h(sh.name)}</h2><div>${h(sh.addr)}</div>${sh.phone ? `<div>Phone: ${h(sh.phone)}</div>` : ""}${g && D.gst.gstin ? `<div><b>GSTIN: ${h(D.gst.gstin)}</b></div>` : ""}</div><div style="text-align:right"><h2>${title}</h2><div>No: <b>${h(i.no)}</b></div><div>Date: <b>${fd(i.d)}</b></div></div></div>
   <div class="ib"><b>Customer:</b> ${h(i.cname)}<br>${h(i.caddr)}${i.cphone ? "<br>Mobile: " + h(i.cphone) : ""}${i.gstin ? "<br>GSTIN: " + h(i.gstin) : ""}${g ? `<br>Place of supply: ${h(stName(i.pos))} (${h(i.pos)})` : ""}</div>
-  <table class="it"><tr><th>#</th><th>Description</th>${g ? "<th>HSN/SAC</th>" : ""}<th class="n">${g ? "Taxable value" : "Amount"}</th>${g ? '<th class="n">GST %</th><th class="n">GST</th>' : ""}<th class="n">Total</th></tr>${rows}</table>
-  <div class="itot">${tdisc ? `<div>Discount given: -${m(tdisc)}</div>` : ""}${g ? `<div>Taxable value: ${m(T_("taxable"))}</div>${inter ? `<div>IGST: ${m(T_("igst"))}</div>` : `<div>CGST: ${m(T_("cgst"))}</div><div>SGST: ${m(T_("sgst"))}</div>`}` : ""}<div class="gt">Total: ${m(i.total)}</div><div>Received (${h(i.pmode)}): ${m(i.rec)}</div>${due > 0 ? `<div style="color:#d92d20"><b>Balance due: ${m(due)}</b></div>` : "<div><b>Paid in full</b></div>"}</div>
+  <table class="it"><tr><th>#</th><th>Description</th>${g ? "<th>HSN/SAC</th>" : ""}<th class="n">${g ? "Taxable value" : "Amount"}</th>${g ? '<th class="n">GST %</th><th class="n">GST</th><th class="n">Total</th>' : ""}</tr>${rows}</table>
+  <div class="itot">${tdisc ? `<div>Total: ${m(r2(i.total + tdisc))}</div><div>Discount given: -${m(tdisc)}</div>` : ""}${g ? `<div>Taxable value: ${m(T_("taxable"))}</div>${inter ? `<div>IGST: ${m(T_("igst"))}</div>` : `<div>CGST: ${m(T_("cgst"))}</div><div>SGST: ${m(T_("sgst"))}</div>`}` : ""}<div class="gt">${g ? "Total" : "Total Receivable Amount"}: ${m(i.total)}</div><div>Received (${h(i.pmode)}): ${m(i.rec)}</div>${due > 0 ? `<div style="color:#d92d20"><b>Balance due: ${m(due)}</b></div>` : "<div><b>Paid in full</b></div>"}</div>
   <div class="iw">Amount in words: <b>${words(i.total)}</b></div>${i.note ? `<div style="margin-top:6px">Note: ${h(i.note)}</div>` : ""}${rev ? `<div style="margin-top:6px;font-size:12px">Revised on ${rev} (previous total: ${m(i.previousTotal)})</div>` : ""}
   <div class="isg"><div>This is a computer generated ${g ? "tax invoice" : "receipt"}.</div><div style="text-align:center">For ${h(sh.name)}<br><br><br>Authorised Signatory</div></div><div class="ty">Thank you for your business!<br><small>Dhanyavaad, phir padharein.</small></div></div>`;
   } else {
-    $("pr").innerHTML = `<div class="th th${mode}"><div class="tc"><b class="tn">${h(sh.name)}</b><br>${h(sh.addr)}${sh.phone ? "<br>Ph: " + h(sh.phone) : ""}${g && D.gst.gstin ? "<br>GSTIN: " + h(D.gst.gstin) : ""}</div><hr><div class="tc"><b>${title}</b></div><div>No: ${h(i.no)}<br>Date: ${fd(i.d)}</div><div>Cust: ${h(i.cname)}${i.cphone ? " (" + h(i.cphone) + ")" : ""}${i.gstin ? "<br>GSTIN: " + h(i.gstin) : ""}</div><hr>${i.lines.map(l => `<div class="tl"><span>${h(l.svc)}${l.rmk ? " - " + h(l.rmk) : ""}</span><span>${m(l.total)}</span></div>${l.disc ? `<div class="tl ts"><span>Disc ${h(l.dtxt)} on ${m(l.gross)}</span><span>-${m(l.disc)}</span></div>` : ""}${g && l.tax ? `<div class="tl ts"><span>incl. GST ${l.rate}%</span><span>${m(l.tax)}</span></div>` : ""}`).join("")}<hr>${g ? `<div class="tl"><span>Taxable</span><span>${m(T_("taxable"))}</span></div>${inter ? `<div class="tl"><span>IGST</span><span>${m(T_("igst"))}</span></div>` : `<div class="tl"><span>CGST</span><span>${m(T_("cgst"))}</span></div><div class="tl"><span>SGST</span><span>${m(T_("sgst"))}</span></div>`}` : ""}${tdisc ? `<div class="tl"><span>Total discount</span><span>-${m(tdisc)}</span></div>` : ""}<div class="tl tb2"><span>TOTAL</span><span>${m(i.total)}</span></div><div class="tl"><span>Received (${h(i.pmode)})</span><span>${m(i.rec)}</span></div>${due > 0 ? `<div class="tl tb2"><span>BALANCE DUE</span><span>${m(due)}</span></div>` : `<div class="tc"><b>PAID</b></div>`}${rev ? `<div class="ts">Revised ${rev}</div>` : ""}<hr><div class="tc"><b>Thank you for your business!</b><br>Dhanyavaad, phir padharein.</div></div>`;
+    $("pr").innerHTML = `<div class="th th${mode}"><div class="tc"><b class="tn">${h(sh.name)}</b><br>${h(sh.addr)}${sh.phone ? "<br>Ph: " + h(sh.phone) : ""}${g && D.gst.gstin ? "<br>GSTIN: " + h(D.gst.gstin) : ""}</div><hr><div class="tc"><b>${title}</b></div><div>No: ${h(i.no)}<br>Date: ${fd(i.d)}</div><div>Cust: ${h(i.cname)}${i.cphone ? " (" + h(i.cphone) + ")" : ""}${i.caddr ? "<br>" + h(i.caddr) : ""}${i.gstin ? "<br>GSTIN: " + h(i.gstin) : ""}</div><hr>${i.lines.map(l => `<div class="tl"><span>${h(l.svc)}${l.rmk ? " - " + h(l.rmk) : ""}</span><span>${m(g ? l.total : r2(l.gross + fe(l)))}</span></div>${g && l.tax ? `<div class="tl ts"><span>incl. GST ${l.rate}%</span><span>${m(l.tax)}</span></div>` : ""}`).join("")}<hr>${g ? `<div class="tl"><span>Taxable</span><span>${m(T_("taxable"))}</span></div>${inter ? `<div class="tl"><span>IGST</span><span>${m(T_("igst"))}</span></div>` : `<div class="tl"><span>CGST</span><span>${m(T_("cgst"))}</span></div><div class="tl"><span>SGST</span><span>${m(T_("sgst"))}</span></div>`}` : ""}${tdisc ? `<div class="tl"><span>Total</span><span>${m(r2(i.total + tdisc))}</span></div><div class="tl"><span>Discount given</span><span>-${m(tdisc)}</span></div>` : ""}<div class="tl tb2"><span>${g ? "TOTAL" : "TOTAL RECEIVABLE"}</span><span>${m(i.total)}</span></div><div class="tl"><span>Received (${h(i.pmode)})</span><span>${m(i.rec)}</span></div>${due > 0 ? `<div class="tl tb2"><span>BALANCE DUE</span><span>${m(due)}</span></div>` : `<div class="tc"><b>PAID</b></div>`}${rev ? `<div class="ts">Revised ${rev}</div>` : ""}<hr><div class="tc"><b>Thank you for your business!</b><br>Dhanyavaad, phir padharein.</div></div>`;
   }
   if (mode !== "a4" && document.head) { const st = document.createElement("style"); st.id = "pgs"; st.textContent = "@page{size:" + mode + "mm auto;margin:2mm}"; document.head.appendChild(st); }
   const old = document.title; document.title = i.no.replace(/\//g, "-"); window.print(); document.title = old;
@@ -1226,7 +1254,8 @@ const nfS = s => s.gst && s.amt ? (s.amt - s.gst) / s.amt : 1;
 /* Fees (customer ka kharcha) alag, Service charge = meri income */
 const sFee = s => Math.max(0, Math.min(+s.fee || 0, s.amt));
 const sSvc = s => r2(s.amt - sFee(s));
-const incSale = s => sFee(s) > 0 ? sSvc(s) * nfS(s) : s.rec * nfS(s);
+const svcNet = s => sFee(s) > 0 ? Math.max(0, r2(sSvc(s) - (s.gst || 0))) : r2(s.amt * nfS(s));
+const incSale = s => sFee(s) > 0 ? svcNet(s) : s.rec * nfS(s);
 function payInc(){
   const out = [], g = {}, pp = {};
   D.sales.forEach(s => (g[s.cid] = g[s.cid] || []).push(s));
@@ -1573,7 +1602,7 @@ function qk(tg, i){
   const q = D.quick[i]; if (!q) return; const arr = tg === "s" ? SL : IL;
   const same = arr.find(l => l.svc === q.svc && String(l.amt).trim() !== "");
   if (same) same.amt = String(r2(N(same.amt) + q.amt));
-  else { const free = arr.find(l => !l.svc.trim() && !String(l.amt).trim()); if (free) { free.svc = q.svc; free.amt = String(q.amt); } else arr.push(tg === "s" ? { svc: q.svc, rmk: "", amt: String(q.amt), fee: "" } : { svc: q.svc, rmk: "", amt: String(q.amt), rate: "" }); }
+  else { const free = arr.find(l => !l.svc.trim() && !String(l.amt).trim()); if (free) { free.svc = q.svc; free.amt = String(q.amt); } else arr.push(tg === "s" ? { svc: q.svc, rmk: "", amt: String(q.amt), fee: "" } : { svc: q.svc, rmk: "", amt: String(q.amt), fee: "", disc: "", rate: "" }); }
   if (tg === "s") { srAuto = true; slRender(); } else { if (!EI) rrAuto = true; ilRender(); }
 }
 function qkAdd(){ const l = v("qks").trim(), a = N(v("qka")); if (need(l && a > 0, "Service ka naam aur amount bharein.")) return; D.quick.push({ svc: l, amt: a }); save(); r(); }
@@ -1596,7 +1625,7 @@ function copyTxt(t){
 function custRows(id){
   let b = 0; const hid = new Set();
   const mine = D.sales.filter(s => s.cid === cm(id)).map(s => { const a = firstLine(s) ? advOf(s) : []; a.forEach(p => hid.add(p.id)); return { s, adv: r2(a.reduce((q, p) => q + p.amt, 0)) }; });
-  return [...mine.map(({ s, adv }) => ({ d: s.d, t: s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : ""), dr: s.amt, cr: r2(s.rec + adv), id: s.id, c: "sales" })),
+  return [...mine.map(({ s, adv }) => ({ d: s.d, t: s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : ""), tp: s.svc + (s.rmk ? " (" + s.rmk + ")" : ""), dr: s.amt, cr: r2(s.rec + adv), id: s.id, c: "sales" })),
     ...D.payments.filter(p => p.cid === cm(id) && !hid.has(p.id)).map(p => ({ d: p.d, t: "Payment received (" + p.mode + ")" + (p.rmk ? " - " + p.rmk : ""), dr: 0, cr: p.amt, id: p.id, c: "payments" }))]
     .sort((a, z) => a.d.localeCompare(z.d) || a.id.localeCompare(z.id)).map(x => (b += x.dr - x.cr, { ...x, b }));
 }
@@ -1655,7 +1684,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.classList && e.target.classList.contains("amt")) { const st = calcField(e.target); if (st === "changed" || st === "bad") { e.preventDefault(); return; } }
   if (e.key === "Enter" && e.target.matches("input:not([type=file])")) { const b = e.target.closest(".row, .mb, .sb"); const bt = b && b.querySelector(".b"); if (bt) { e.preventDefault(); bt.click(); } }
 });
-const APP_VER = "V36", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
+const APP_VER = "V40", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
 { const e = $("ver"); if (e) e.textContent = verTxt(); document.querySelectorAll("#setup .sb,#lock .sb").forEach(x => { x.dataset.v = verTxt(); }); }
 boot();
 </script>
