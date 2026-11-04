@@ -87,6 +87,19 @@ h2{font-size:24px;letter-spacing:-.2px}
 .c b{font-size:23px}
 .b{box-shadow:0 2px 8px rgba(29,78,216,.28)}.b:hover{filter:brightness(1.07)}
 th{text-transform:uppercase;letter-spacing:.4px;font-size:11px}
+.gl-h{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px}.gl-h h3{margin:0}
+.gl-in{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0 4px}
+.gl-grid{display:grid;grid-template-columns:minmax(260px,1.3fr) minmax(230px,1fr);gap:14px;margin-top:10px}
+.gl-list{border:1px solid #e3e8f2;border-radius:12px;padding:4px 14px;background:#fbfcff}
+.gl-i{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed #e3e8f2;font-size:14px}.gl-i:last-child{border-bottom:0}
+.gl-i b{font-variant-numeric:tabular-nums}.gl-b{font-weight:700}
+.gl-s{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;margin-right:8px;font-weight:700;font-size:13px}
+.gl-s.p{background:#e4f6ec;color:#0f9f5e}.gl-s.mn{background:#fdecea;color:#d92d20}
+.gl-r{border-radius:12px;padding:16px;background:linear-gradient(135deg,#0b1b3a,#16305f);color:#fff;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.gl-r small{color:#b9c6e4;font-size:12.5px}.gl-r>b{font-size:30px;font-variant-numeric:tabular-nums}.gl-c{font-size:13px;color:#dbe4f7}
+.gl-p{display:inline-block;align-self:flex-start;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#fff}
+.gl-p.g{color:#0f9f5e}.gl-p.r{color:#d92d20}.gl-p.o{color:#b54708}.gl-p.n{color:#52617c;font-weight:600}
+@media(max-width:720px){.gl-grid{grid-template-columns:1fr}}
 .dg{font-size:12px;font-weight:700;color:var(--m);margin:2px 2px 6px}
 .cards.dcs{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:12px}
 .dc{display:flex;align-items:center;gap:11px;padding:10px 13px;min-height:77px;box-sizing:border-box;background:var(--s);border:1px solid #e3e8f2;border-radius:11px;box-shadow:0 1px 2px rgba(16,24,40,.06)}
@@ -447,8 +460,8 @@ function months(fy){
   return o;
 }
 const mlabel = k => new Date(k + "-01").toLocaleString("en-IN", { month: "long", year: "numeric" });
-const allExp = () => [...D.expenses.map(e => ({ id: e.id, c: "expenses", d: e.d, cat: e.cat, amt: e.amt, note: e.note, mode: e.mode || "Cash" })),
-  ...D.ptx.filter(t => t.kind === "paid").map(t => ({ d: t.d, cat: "Lender: " + pn(t.pid), amt: t.amt, note: t.note, mode: t.mode || "Cash" }))].sort((a, b) => (b.d.localeCompare(a.d) || (b.id || "").localeCompare(a.id || "")));
+const allExp = () => [...D.expenses.map(e => ({ id: e.id, c: "expenses", d: e.d, cat: e.cat, amt: e.amt, note: e.note, mode: e.mode || "Cash", src: e.src })),
+  ...D.ptx.filter(t => t.kind === "paid").map(t => ({ d: t.d, cat: "Lender: " + pn(t.pid), amt: t.amt, note: t.note, mode: t.mode || "Cash", src: t.src }))].sort((a, b) => (b.d.localeCompare(a.d) || (b.id || "").localeCompare(a.id || "")));
 
 /* ---------- helpers ---------- */
 const F = (l, i) => `<label>${l}${i}</label>`;
@@ -648,7 +661,7 @@ function sTbl(){
   ["d", "c", "s", "r", "a", "g", "p", "m"].forEach(k => { const e = $("ar_" + k); if (e) e.textContent = SS.k === k ? (SS.dir > 0 ? "▲" : "▼") : ""; });
   const td = (c, x) => `<td${c ? ` class="${c}"` : ""}>${x}</td>`;
   $("sinfo").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${rs.length} entries | Kul amount ${m(rs.reduce((a, x) => a + x.amt, 0))} | Received ${m(rs.reduce((a, x) => a + x.rec, 0))} | Pending ${m(rs.reduce((a, x) => a + pm[x.id], 0))} <span style="color:var(--m)">(customer ka payment purane bill se kat'ta hai) &nbsp;|&nbsp; <b class="g">Hara = poora mila</b> &nbsp; <b class="r">Laal = baaki</b></span></p>`;
-  $("sbody").innerHTML = rs.map(s => { const pe = pm[s.id]; return `<tr class="${pe > 0 ? "rd" : "gr"}">${td("nw", fd(s.d))}${td("", `<button class="lk" onclick="openLedger('${s.cid || "W"}')">${h(cn(s.cid))}</button>`)}${td("sv", h(s.svc))}${td("rk", h(s.rmk))}${td("nw", m(s.amt) + (sFee(s) > 0 ? `<br><small style="color:var(--m)">Svc ${m(sSvc(s))} + Fees ${m(sFee(s))}</small>` : ""))}${td("nw", m(s.rec) + (advAmt(s) > 0 ? `<br><small style="color:var(--m)">+ ${m(advAmt(s))} advance</small>` : ""))}${td("nw", pe ? `<span class="r">${m(pe)}</span>` : "-")}${td("nw", s.mode)}${td("", X("sales", s.id))}</tr>`; }).join("") || `<tr><td colspan="9" class="e">Koi entry nahi mili</td></tr>`;
+  $("sbody").innerHTML = rs.map(s => { const pe = pm[s.id]; return `<tr class="${pe > 0 ? "rd" : "gr"}">${td("nw", fd(s.d))}${td("", `<button class="lk" onclick="openLedger('${s.cid || "W"}')">${h(cn(s.cid))}</button>`)}${td("sv", h(s.svc))}${td("rk", h(s.rmk))}${td("nw", m(s.amt) + (sFee(s) > 0 ? `<br><small style="color:var(--m)">Svc ${m(sSvc(s))} + Fees ${m(sFee(s))}</small>` : ""))}${td("nw", m(s.rec) + (advAmt(s) > 0 ? `<br><small style="color:var(--m)">+ ${m(advAmt(s))} advance</small>` : ""))}${td("nw", pe ? `<span class="r">${m(pe)}</span>` : "-")}${td("nw", s.rec > 0 || advAmt(s) > 0 ? s.mode : "-")}${td("", X("sales", s.id))}</tr>`; }).join("") || `<tr><td colspan="9" class="e">Koi entry nahi mili</td></tr>`;
 }
 function vCust(){
   if (L) return vLedger();
@@ -673,16 +686,16 @@ function addPay(){ const a = N(v("pa")); if (need(a, "Amount bharein.")) return;
 const CATS = ["Customer ke kaam ka kharcha (fees, bill)", "Paper, Ink aur Stationery", "Printer / Mantra EMI", "Loan EMI aur Charges", "Repair", "Banner / Advertising", "Furniture aur Shop saman", "Registration / Retailer ID", "Transport aur Misc", "Shop rent", "Electricity", "Internet", "Salary", "Other"];
 function vExp(){
   const rows = allExp().filter(x => inFY(x.d));
-  return `<h2>Expenses</h2><div class="box"><div class="row">${F("Date", `<input type="date" id="ed" value="${today()}">`)}${F("Category", `<input id="ec" list="cl"><datalist id="cl">${CATS.map(x => `<option>${x}</option>`).join("")}</datalist>`)}${F("Amount", `<input type="text" inputmode="decimal" class="amt" id="ea" style="width:120px">`)}${D.gst.on ? F("GST (ITC) agar hai", `<input type="text" inputmode="decimal" class="amt" id="ei" style="width:110px">`) : ""}${F("Mode", `<select id="em"><option>Cash</option><option>UPI</option></select>`)}${F("Note", `<input id="en" style="width:200px">`)}<button class="b" onclick="addExp()">Add expense</button></div></div>
+  return `<h2>Expenses</h2><div class="box"><div class="row">${F("Date", `<input type="date" id="ed" value="${today()}">`)}${F("Category", `<input id="ec" list="cl"><datalist id="cl">${CATS.map(x => `<option>${x}</option>`).join("")}</datalist>`)}${F("Amount", `<input type="text" inputmode="decimal" class="amt" id="ea" style="width:120px">`)}${D.gst.on ? F("GST (ITC) agar hai", `<input type="text" inputmode="decimal" class="amt" id="ei" style="width:110px">`) : ""}${F("Mode", `<select id="em" onchange="$('esrcw').style.display=this.value==='Cash'?'':'none'"><option>Cash</option><option>UPI</option></select>`)}<span id="esrcw">${F("Cash kahan se", `<select id="esrc"><option value="">Galle se</option><option value="Apni jeb">Apni jeb se</option></select>`)}</span>${F("Note", `<input id="en" style="width:200px">`)}<button class="b" onclick="addExp()">Add expense</button></div></div>
   <div class="box"><div class="row">${F("Search (category, note, amount, date)", `<input id="eq" oninput="eTbl()" style="width:270px">`)}${F("Category", `<select id="ec2" onchange="eTbl()"><option value="">(Sab)</option>${[...new Set(rows.map(x => x.cat))].sort().map(x => `<option value="${h(x)}">${h(x)}</option>`).join("")}</select>`)}${F("From", `<input type="date" id="ef" onchange="eTbl()">`)}${F("To", `<input type="date" id="et" onchange="eTbl()">`)}${dBtns("ef", "et", "eTbl")}<button class="g2" onclick="clrE()">Clear all filters</button></div><div id="etbl"></div></div>`;
 }
 function clrE(){ ["eq", "ec2", "ef", "et"].forEach(i => { $(i).value = ""; }); eTbl(); }
 function eTbl(){
   const q = v("eq").toLowerCase(), c = v("ec2"), f = v("ef"), t = v("et");
   const rows = allExp().filter(x => inFY(x.d) && (!f || x.d >= f) && (!t || x.d <= t) && (!c || x.cat === c) && (!q || [x.cat, x.note, x.amt, fd(x.d)].join(" ").toLowerCase().includes(q)));
-  $("etbl").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${rows.length} entries | Total: <b>${m(rows.reduce((a, x) => a + x.amt, 0))}</b> (lenders ko diye gaye paise bhi shamil)</p>` + T(["Date", "Category", "Amount", "Mode", "Note", ""], rows.map(x => R(fd(x.d), h(x.cat), m(x.amt), x.mode, h(x.note), X(x.c, x.id))));
+  $("etbl").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${rows.length} entries | Total: <b>${m(rows.reduce((a, x) => a + x.amt, 0))}</b> (lenders ko diye gaye paise bhi shamil)</p>` + T(["Date", "Category", "Amount", "Mode", "Note", ""], rows.map(x => R(fd(x.d), h(x.cat), m(x.amt), x.mode + (x.mode !== "UPI" && x.src === "Apni jeb" ? " (jeb se)" : ""), h(x.note), X(x.c, x.id))));
 }
-function addExp(){ const a = N(v("ea")); if (need(a && v("ec").trim(), "Category aur amount bharein.")) return; D.expenses.push({ id: uid(), d: v("ed") || today(), cat: v("ec").trim(), amt: a, note: v("en"), mode: v("em") || "Cash", itc: $("ei") ? N(v("ei")) : 0 });
+function addExp(){ const a = N(v("ea")); if (need(a && v("ec").trim(), "Category aur amount bharein.")) return; D.expenses.push({ id: uid(), d: v("ed") || today(), cat: v("ec").trim(), amt: a, note: v("en"), mode: v("em") || "Cash", src: v("em") === "Cash" ? v("esrc") : "", itc: $("ei") ? N(v("ei")) : 0 });
   const dd = v("ed") || today(); if (FY !== "all" && fyOf(dd) !== FY) FY = fyOf(dd);
   save(); r(); }
 const PF = { n: "", t: "", b: "" };
@@ -722,7 +735,7 @@ function vParty(){
   const defFrom = a && a.from ? a.from : lastDue || today().slice(0, 7), na = a && a.on ? nextAuto(p) : null;
   return `<h2>${h(p.name)} ${cl ? `<span class="r" style="font-size:14px">🔒 CLOSED</span>` : ""} <button class="g2" onclick="P=null;r()">Back</button> <button class="b" onclick="printParty()">Print / Save PDF</button> ${cl ? `<button class="b" onclick="reopenParty('${p.id}')">Reopen account</button>` : `<button class="g2" onclick="closeParty('${p.id}')">Account close karein</button>`}</h2>
   <div class="cards"><div class="c"><small>${pbal(P) > 0 ? "Lender ko dena hai" : pbal(P) < 0 ? "Lender se wapas lena hai / Advance" : "Hisaab barabar"}</small><b class="${pbal(P) > 0 ? "r" : "g"}">${m(pbal(P))}</b></div></div>
-  ${cl ? `<div class="box" style="border-color:var(--r)">Ye account <b>close</b> hai${p.closedOn ? " (" + fd(p.closedOn) + " se)" : ""}. Isme nayi entry nahi judegi aur har mahine ki auto entry band hai. Dobara chalu karne ke liye "Reopen account" dabayein.</div>` : `<div class="box"><div class="row">${F("Date", `<input type="date" id="td" value="${today()}">`)}${F("Entry", `<select id="tk"><option value="due">Naya bill / kiraya (dena hai)</option><option value="paid">Paise diye (paid)</option></select>`)}${F("Amount", `<input type="text" inputmode="decimal" class="amt" id="ta" style="width:120px">`)}${F("Mode (paid ho to)", `<select id="tm"><option>Cash</option><option>UPI</option></select>`)}${F("Note", `<input id="tn">`)}<button class="b" onclick="addPtx()">Add entry</button></div><p class="m">"Paise diye" apne aap ${h(p.type)} ke kharche mein ginti hoti hai.</p></div>
+  ${cl ? `<div class="box" style="border-color:var(--r)">Ye account <b>close</b> hai${p.closedOn ? " (" + fd(p.closedOn) + " se)" : ""}. Isme nayi entry nahi judegi aur har mahine ki auto entry band hai. Dobara chalu karne ke liye "Reopen account" dabayein.</div>` : `<div class="box"><div class="row">${F("Date", `<input type="date" id="td" value="${today()}">`)}${F("Entry", `<select id="tk"><option value="due">Naya bill / kiraya (dena hai)</option><option value="paid">Paise diye (paid)</option></select>`)}${F("Amount", `<input type="text" inputmode="decimal" class="amt" id="ta" style="width:120px">`)}${F("Mode (paid ho to)", `<select id="tm" onchange="$('tsrcw').style.display=this.value==='Cash'?'':'none'"><option>Cash</option><option>UPI</option></select>`)}<span id="tsrcw">${F("Cash kahan se", `<select id="tsrc"><option value="">Galle se</option><option value="Apni jeb">Apni jeb se</option></select>`)}</span>${F("Note", `<input id="tn">`)}<button class="b" onclick="addPtx()">Add entry</button></div><p class="m">"Paise diye" apne aap ${h(p.type)} ke kharche mein ginti hoti hai.</p></div>
   <div class="box"><h3>↻ Har mahine auto entry (kiraya / bill)</h3>${a && a.on ? `<p class="m">Chalu hai: <b>${m(a.amt)}</b>, <b>${mlabel(a.from)}</b> ke kiraye se. Entry har mahine ki <b>${a.day}</b> tareekh ko judti hai ${a.adv ? "(usi mahine ka kiraya, advance)" : "(pichle mahine ka kiraya)"}.${na ? " <b>Agli entry: " + fd(na.d) + "</b> (" + mshort(na.mk) + " ka kiraya)." : ""}</p>` : `<p class="m">Abhi band hai. Chalu karne par har mahine ki tareekh aate hi "Due" ki entry apne aap judegi.</p>`}<div class="row">${F("Amount (₹)", `<input type="text" inputmode="decimal" class="amt" id="aa" value="${a ? a.amt : ""}" style="width:110px">`)}${F("Mahine ka din (1-28)", `<input type="number" id="ad_" min="1" max="28" value="${a ? a.day : 1}" style="width:90px">`)}${F("Kis mahine ke kiraye se shuru", `<input type="month" id="af" value="${defFrom}">`)}${F("Entry kab judegi", `<select id="aw"><option value="arr"${a && a.adv ? "" : " selected"}>Agle mahine ki tareekh par (pichle mahine ka kiraya)</option><option value="adv"${a && a.adv ? " selected" : ""}>Usi mahine ki tareekh par (advance)</option></select>`)}${F("Note", `<input id="an_" value="${h(a ? a.note : "Month rent")}" style="width:170px">`)}<button class="b" onclick="saveAuto()">Auto chalu / save</button>${a && a.on ? `<button class="g2" onclick="stopAuto()">Auto band karein</button>` : ""}</div><p class="m">Pehle ki entry dubara nahi judti. Software band rehne par bhi, kholte hi chhooti hui mahino ki entry judd jati hai.</p></div>`}
   <div class="box"><div class="row" style="margin-bottom:10px">${F("Search (note, date)", `<input id="lq" oninput="lTbl()" style="width:240px">`)}${F("Entry", `<select id="lk" onchange="lTbl()"><option value="">Sab</option><option value="due">Due</option><option value="paid">Paid</option></select>`)}${F("Statement: From", `<input type="date" id="plf" value="${h(PLF)}" onchange="PLF=this.value;lTbl()">`)}${F("To", `<input type="date" id="plt" value="${h(PLT)}" onchange="PLT=this.value;lTbl()">`)}${ordSel("lTbl()")}${stmBtns("p")}<button class="g2" onclick="PLF=PLT='';r()">Saari entry</button></div><div id="ltbl"></div></div>`;
 }
@@ -731,7 +744,7 @@ function lTbl(){
   const q = v("lq").toLowerCase(), k = v("lk"), { rows: pr, open, close } = pLedRows(), per = !!(PLF || PLT);
   const rows = pr.filter(t => (!k || t.kind === k) && (!q || [t.note, fd(t.d), t.amt].join(" ").toLowerCase().includes(q)));
   const asc = LORD === "asc", ord = asc ? rows.slice().reverse() : rows;
-  const f = t => RC(t.kind === "due" ? "rd" : "gr", fd(t.d), t.kind === "due" ? `<b class="r">Due</b>` : `<b class="g">Paid</b>`, `<b class="${t.kind === "due" ? "r" : "g"}">${m(t.amt)}</b>`, h(t.note), m(t.b), p.closed ? "" : X("ptx", t.id));
+  const f = t => RC(t.kind === "due" ? "rd" : "gr", fd(t.d), t.kind === "due" ? `<b class="r">Due</b>` : `<b class="g">Paid</b>`, `<span style="white-space:nowrap"><b class="${t.kind === "due" ? "r" : "g"}">${m(t.amt)}</b>${t.kind === "paid" ? ` <span class="m">(${h(t.mode || "Cash")}${t.mode !== "UPI" && t.src === "Apni jeb" ? ", jeb se" : ""})</span>` : ""}</span>`, h(t.note), m(t.b), p.closed ? "" : X("ptx", t.id));
   const op = per ? [RC("op", PLF ? fd(PLF) : "", "", "", "Opening balance (pichla baaki)", m(open), "")] : [];
   $("ltbl").innerHTML = `<p class="m"><b class="r">Laal (Due)</b> = lender ka bill ya kiraya (dena hai) &nbsp;|&nbsp; <b class="g">Hara (Paid)</b> = aapne paise diye</p>` + T(["Date", "Entry", "Amount", "Note", "Baaki", ""],
     [...(asc ? op : []), ...ord.map(f), ...(asc ? [] : op), RC("tt", "", "Total", `<span class="r">Due ${m(lsum(rows, "due"))}</span><br><span class="g">Paid ${m(lsum(rows, "paid"))}</span>`, "", m(close), "")]);
@@ -779,7 +792,7 @@ function autoDue(){
   if (n) { save(); toast(n + " auto entry (kiraya/bill) judi."); if (V === "lend") r(); }
   return n;
 }
-function addPtx(){ const pp = D.parties.find(x => x.id === P); if (pp && pp.closed) return alert("Ye account close hai. Pehle Reopen karein."); const a = N(v("ta")); if (need(a, "Amount bharein.")) return; D.ptx.push({ id: uid(), pid: P, d: v("td") || today(), kind: v("tk"), amt: a, note: v("tn"), mode: v("tm") || "Cash" }); save(); r(); }
+function addPtx(){ const pp = D.parties.find(x => x.id === P); if (pp && pp.closed) return alert("Ye account close hai. Pehle Reopen karein."); const a = N(v("ta")); if (need(a, "Amount bharein.")) return; D.ptx.push({ id: uid(), pid: P, d: v("td") || today(), kind: v("tk"), amt: a, note: v("tn"), mode: v("tm") || "Cash", src: v("tm") === "Cash" ? v("tsrc") : "" }); save(); r(); }
 function vAst(){
   return `<h2>Assets</h2><div class="box"><div class="row">${F("Asset", `<input id="an" placeholder="PC, table, chair...">`)}${F("Date", `<input type="date" id="ad" value="${today()}">`)}${F("Price (each)", `<input type="text" inputmode="decimal" class="amt" id="ac" style="width:120px">`)}${F("Qty", `<input type="number" id="aq" value="1" min="1" style="width:70px">`)}<button class="b" onclick="addAst()">Add asset</button></div></div>
   <div class="box"><p class="m">Total asset value: <b>${m(D.assets.reduce((a, x) => a + x.cost * x.qty, 0))}</b></p>${T(["Asset", "Date", "Price", "Qty", "Total", ""], D.assets.map(x => R(h(x.name), fd(x.d), m(x.cost), x.qty, m(x.cost * x.qty), X("assets", x.id))))}</div>`;
@@ -836,10 +849,10 @@ function xl(){
 const FD = {
   sales: [["d", "Date", "date"], ["cid", "Customer", "c"], ["svc", "Service", "t"], ["rmk", "Remark", "t"], ["amt", "Total Lena (customer se)", "n"], ["fee", "Fees / Govt. Fees (isme se, meri income nahi)", "n"], ["rec", "Received", "n"], ["mode", "Mode", ["Cash", "UPI"]]],
   payments: [["d", "Date", "date"], ["amt", "Amount", "n"], ["mode", "Mode", ["Cash", "UPI"]], ["rmk", "Remark", "t"]],
-  expenses: [["d", "Date", "date"], ["cat", "Category", "t"], ["amt", "Amount", "n"], ["note", "Note", "t"], ["mode", "Mode", ["Cash", "UPI"]], ["itc", "GST / ITC (agar hai)", "n"]],
+  expenses: [["d", "Date", "date"], ["cat", "Category", "t"], ["amt", "Amount", "n"], ["note", "Note", "t"], ["mode", "Mode", ["Cash", "UPI"]], ["src", "Cash kahan se (Cash ho to)", ["Galla", "Apni jeb"]], ["itc", "GST / ITC (agar hai)", "n"]],
   jobs: [["d", "Date", "date"], ["cname", "Customer", "t"], ["phone", "Mobile", "t"], ["svc", "Service / Form", "t"], ["ack", "Application / Ack no", "t"], ["st", "Status", ["Pending", "In Process", "Ready", "Delivered"]], ["note", "Note", "t"]],
   gstRet: [["per", "Period (YYYY-MM)", "t"], ["form", "Form", ["GSTR-1", "GSTR-3B", "Other"]], ["d", "Filed on", "date"], ["arn", "ARN / Ack no", "t"], ["igst", "IGST bhara", "n"], ["cgst", "CGST bhara", "n"], ["sgst", "SGST bhara", "n"], ["int", "Interest", "n"], ["fee", "Late fee", "n"], ["note", "Note", "t"]],
-  ptx: [["d", "Date", "date"], ["kind", "Entry (due = dena hai, paid = diya)", ["due", "paid"]], ["amt", "Amount", "n"], ["note", "Note", "t"], ["mode", "Mode (paid ho to)", ["Cash", "UPI"]]],
+  ptx: [["d", "Date", "date"], ["kind", "Entry (due = dena hai, paid = diya)", ["due", "paid"]], ["amt", "Amount", "n"], ["note", "Note", "t"], ["mode", "Mode (paid ho to)", ["Cash", "UPI"]], ["src", "Cash kahan se (Cash ho to)", ["Galla", "Apni jeb"]]],
   customers: [["name", "Name", "t"], ["phone", "Phone", "t"], ["addr", "Address", "t"], ["gstin", "GSTIN (GST ON ho tab)", "t"]],
   parties: [["name", "Name", "t"], ["type", "Type", ["Shop rent", "Electricity", "Loan", "Other"]]],
   assets: [["name", "Asset", "t"], ["d", "Date", "date"], ["cost", "Price (each)", "n"], ["qty", "Qty", "n"]]
@@ -900,20 +913,20 @@ function printDay(){
   const d = v("drd") || today(), ss = D.sales.filter(s => s.d === d), ps = D.payments.filter(p => p.d === d), es = allExp().filter(e => e.d === d);
   const rec = md => r2(ss.filter(s => s.mode === md).reduce((a, s) => a + s.rec, 0) + ps.filter(p => p.mode === md).reduce((a, p) => a + p.amt, 0));
   const billed = r2(ss.reduce((a, s) => a + s.amt, 0)), got = r2(ss.reduce((a, s) => a + s.rec, 0) + ps.reduce((a, p) => a + p.amt, 0)), exp = r2(es.reduce((a, e) => a + e.amt, 0)), fees = r2(ss.reduce((a, x) => a + sFee(x), 0)), inc = r2(ss.reduce((a, x) => a + incSale(x), 0) + payInc().filter(x => x.d === d).reduce((a, x) => a + x.a, 0));
-  const rows = [...ss.map(s => R("Sale", h(cn(s.cid)), h(s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : "")), m(s.amt), m(s.rec), s.rec > 0 ? s.mode : "-")), ...ps.map(p => R("Payment", h(cn(p.cid)), "Baaki ka payment" + (p.rmk ? " (" + h(p.rmk) + ")" : ""), "", m(p.amt), p.mode)), ...es.map(e => R("Kharcha", h(e.cat), h(e.note), m(e.amt), "-", "-"))];
+  const rows = [...ss.map(s => R("Sale", h(cn(s.cid)), h(s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : "")), m(s.amt), m(s.rec), s.rec > 0 ? s.mode : "-")), ...ps.map(p => R("Payment", h(cn(p.cid)), "Baaki ka payment" + (p.rmk ? " (" + h(p.rmk) + ")" : ""), "", m(p.amt), p.mode)), ...es.map(e => R("Kharcha", h(e.cat), h(e.note), m(e.amt), "-", e.mode + (e.mode !== "UPI" && e.src === "Apni jeb" ? " (jeb se)" : "")))];
   printDoc("Din ka report: " + fd(d), "Sales " + ss.length + " | Customer payment " + ps.length + " | Kharcha " + es.length, ["Type", "Customer / Naam", "Detail", "Amount", "Mila", "Mode"], rows, `Kul bill: <b>${m(billed)}</b> | <span style="color:#d92d20">Udhaar (baaki): <b>${m(r2(ss.reduce((a, s) => a + Math.max(0, s.amt - s.rec), 0)))}</b></span> | Cash mila: <b>${m(rec("Cash"))}</b> | UPI mila: <b>${m(rec("UPI"))}</b> | Kul mila: <b>${m(got)}</b><br>${fees ? `Fees (customer ka kharcha, income nahi): <b>${m(fees)}</b> | ` : ""}Meri income: <b>${m(inc)}</b> | Kharcha: <b>${m(exp)}</b> | Net (income - kharcha): <b>${m(r2(inc - exp))}</b>`, "Din-report-" + d);
 }
 function printCust(){
   const c = L === "W" ? WALK : D.customers.find(x => x.id === L); if (!c) return;
   const { rows, open, close } = cLedRows(), per = !!(LF || LT), asc = rows.slice().reverse();
-  const list = [...(per || open ? [R(LF ? fd(LF) : "", "<b>Opening balance (pichla baaki)</b>", "", "", `<b>${m(open)}</b>`)] : []), ...asc.map(x => R(fd(x.d), h(x.tp || x.t), x.dr ? `<span class="r">${m(x.dr)}</span>` : "", x.cr ? `<span class="g">${m(x.cr)}</span>` : "", m(x.b))), RC("tt", "", "Total", `<span class="r">${m(sumR(rows, "dr"))}</span>`, `<span class="g">${m(sumR(rows, "cr"))}</span>`, m(close))];
+  const list = [...(per || open ? [R(LF ? fd(LF) : "", "<b>Opening balance (pichla baaki)</b>", "", "", `<b>${m(open)}</b>`)] : []), ...asc.map(x => R(fd(x.d), h(x.tp || x.t), x.dr ? `<span class="r">${m(x.dr)}</span>` : "", x.cr ? `<span class="g">${m(x.cr)}</span>${x.md ? ` (${h(x.md)})` : ""}` : "", m(x.b))), RC("tt", "", "Total", `<span class="r">${m(sumR(rows, "dr"))}</span>`, `<span class="g">${m(sumR(rows, "cr"))}</span>`, m(close))];
   const sub = h(c.phone) + " " + h(c.addr) + (per ? " | Statement: " + (LF ? fd(LF) : "shuru") + " se " + (LT ? fd(LT) : "aaj") + " tak" : "");
   printDoc("Customer ledger: " + h(c.name), sub, ["Date", "Detail", "Charge", "Paid", "Balance"], list, `Closing balance${LT ? " (" + fd(LT) + " tak)" : ""}: <b>${m(close)}</b> (${balLbl(close)})` + (per && r2(close - cbal(L)) ? `<br>Maujooda kul balance: <b>${m(cbal(L))}</b>` : ""), "Ledger-" + c.name);
 }
 function printParty(){
   const p = D.parties.find(x => x.id === P); if (!p) return;
   const { rows, open, close } = pLedRows(), per = !!(PLF || PLT), asc = rows.slice().reverse();
-  const list = [...(per ? [R(PLF ? fd(PLF) : "", "<b>Opening balance (pichla baaki)</b>", "", "", `<b>${m(open)}</b>`)] : []), ...asc.map(t => R(fd(t.d), h(t.note), t.kind === "due" ? `<span class="r">${m(t.amt)}</span>` : "", t.kind === "paid" ? `<span class="g">${m(t.amt)}</span>` : "", m(t.b))), RC("tt", "", "Total", `<span class="r">${m(lsum(rows, "due"))}</span>`, `<span class="g">${m(lsum(rows, "paid"))}</span>`, m(close))];
+  const list = [...(per ? [R(PLF ? fd(PLF) : "", "<b>Opening balance (pichla baaki)</b>", "", "", `<b>${m(open)}</b>`)] : []), ...asc.map(t => R(fd(t.d), h(t.note), t.kind === "due" ? `<span class="r">${m(t.amt)}</span>` : "", t.kind === "paid" ? `<span class="g">${m(t.amt)}</span> (${h(t.mode || "Cash")})` : "", m(t.b))), RC("tt", "", "Total", `<span class="r">${m(lsum(rows, "due"))}</span>`, `<span class="g">${m(lsum(rows, "paid"))}</span>`, m(close))];
   printDoc("Lender ledger: " + h(p.name), "Type: " + h(p.type) + (p.closed ? " | Account closed" + (p.closedOn ? " (" + fd(p.closedOn) + ")" : "") : "") + (per ? " | Statement: " + (PLF ? fd(PLF) : "shuru") + " se " + (PLT ? fd(PLT) : "aaj") + " tak" : ""), ["Date", "Note", "Due (dena hai)", "Paid (diya)", "Baaki"], list, `Closing baaki dena: <b>${m(close)}</b>` + (per && r2(close - pbal(P)) ? `<br>Maujooda kul baaki: <b>${m(pbal(P))}</b>` : ""), "Lender-" + p.name);
 }
 function pLedRows(){
@@ -1503,7 +1516,7 @@ function cLedRows(){
 }
 function cLed(){
   const { rows, open, close } = cLedRows(), per = !!(LF || LT), asc = LORD === "asc", ord = asc ? rows.slice().reverse() : rows;
-  const f = x => RC(x.c === "payments" ? "gr" : "rd", fd(x.d), h(x.t), x.dr ? `<b class="r">${m(x.dr)}</b>` : "", x.cr ? `<b class="g">${m(x.cr)}</b>` : "", m(x.b), X(x.c, x.id));
+  const f = x => RC(x.c === "payments" ? "gr" : "rd", fd(x.d), h(x.t), x.dr ? `<b class="r">${m(x.dr)}</b>` : "", x.cr ? `<span style="white-space:nowrap"><b class="g">${m(x.cr)}</b>${x.md ? ` <span class="m">(${h(x.md)})</span>` : ""}</span>` : "", m(x.b), X(x.c, x.id));
   const op = per ? [RC("op", LF ? fd(LF) : "", "Opening balance (pichla baaki)", "", "", m(open), "")] : [];
   $("cled").innerHTML = T(["Date", "Detail", "Charge", "Paid", "Balance", ""], [...(asc ? op : []), ...ord.map(f), ...(asc ? [] : op), RC("tt", "", per ? "Total (is period ka) / Closing" : "Total", `<b class="r">${m(sumR(rows, "dr"))}</b>`, `<b class="g">${m(sumR(rows, "cr"))}</b>`, m(close), "")]);
 }
@@ -1575,24 +1588,30 @@ let GD = null;
 function gallaNums(d){
   const sum = (a, f) => r2(a.reduce((t, x) => t + f(x), 0));
   const cs = sum(D.sales.filter(s => s.d === d && s.mode === "Cash"), s => s.rec), cp = sum(D.payments.filter(p => p.d === d && p.mode === "Cash"), p => p.amt);
-  const ce = sum(allExp().filter(e => e.d === d && e.mode !== "UPI"), e => e.amt);
+  const ce = sum(allExp().filter(e => e.d === d && e.mode !== "UPI" && e.src !== "Apni jeb"), e => e.amt), oe = sum(allExp().filter(e => e.d === d && e.mode !== "UPI" && e.src === "Apni jeb"), e => e.amt);
   const us = r2(sum(D.sales.filter(s => s.d === d && s.mode === "UPI"), s => s.rec) + sum(D.payments.filter(p => p.d === d && p.mode === "UPI"), p => p.amt));
   const G = D.galla || {}, g = G[d] || {}, has = x => x !== undefined && x !== null && x !== "";
   const prevD = Object.keys(G).filter(k => k < d && has(G[k].counted)).sort().pop(), sug = prevD ? N(G[prevD].counted) : null;
-  const open = has(g.open) ? N(g.open) : (sug !== null ? sug : 0), out = N(g.out), exp = r2(open + cs + cp - ce - out), counted = has(g.counted) ? N(g.counted) : null;
-  return { cs, cp, ce, us, g, sug, prevD, open, out, exp, counted, diff: counted === null ? null : r2(counted - exp), usedSug: !has(g.open) && sug !== null };
+  const open = has(g.open) ? N(g.open) : (sug !== null ? sug : 0), out = N(g.out), add = N(g.add), exp = r2(open + cs + cp + add - ce - out), counted = has(g.counted) ? N(g.counted) : null;
+  return { cs, cp, ce, oe, add, us, g, sug, prevD, open, out, exp, counted, diff: counted === null ? null : r2(counted - exp), usedSug: !has(g.open) && sug !== null };
 }
 function gallaRender(){
   const e = $("gbox"); if (!e) return; if (!GD) GD = today();
   const n = gallaNums(GD), g = n.g, inp = (id, key, w, ph) => `<input type="text" inputmode="decimal" class="amt" id="${id}" value="${h(g[key] ?? "")}" placeholder="${h(ph || "")}" style="width:${w}px" oninput="gallaSet('${key}',this.value)">`;
-  e.innerHTML = `<h3>💵 Galla Tally (Cash Drawer)</h3><div class="row">${F("Tareekh", `<input type="date" value="${GD}" onchange="GD=this.value;gallaRender()">`)}${F("Opening cash (subah ka float)", inp("gop", "open", 170, n.sug !== null ? n.sug + " (pichhli ginti)" : "0"))}${F("Cash nikala (bank / ghar)", inp("gout", "out", 150, "0"))}${F("Asli ginti (counted cash)", inp("gcnt", "counted", 160, ""))}</div><div id="gnums"></div>`;
+  e.innerHTML = `<div class="gl-h"><h3>💵 Galla Tally (Cash Drawer)</h3><div>${F("Tareekh", `<input type="date" value="${GD}" onchange="GD=this.value;gallaRender()">`)}</div></div>
+  <div class="gl-in">${F("Opening cash (subah ka float)", inp("gop", "open", 150, n.sug !== null ? n.sug + " (pichhli ginti)" : "0"))}${F("➕ Cash dala (jeb / bank se galle me)", inp("gadd", "add", 160, "0"))}${F("➖ Cash nikala (galle se bank / ghar)", inp("gout", "out", 160, "0"))}${F("🧮 Asli ginti (counted cash)", inp("gcnt", "counted", 150, ""))}</div><div id="gnums"></div>`;
   gallaUpd();
 }
 function gallaUpd(){
   const e = $("gnums"); if (!e) return; const n = gallaNums(GD);
-  const row = (l, v_, b) => `<tr><td${b ? ' style="font-weight:700"' : ""}>${l}</td><td class="n" style="text-align:right${b ? ";font-weight:700" : ""}">${v_}</td></tr>`;
-  const st = n.diff === null ? `<span class="m">Asli ginti bharein to match dikhega</span>` : n.diff === 0 ? `<b class="g">✅ Galla match</b>` : n.diff < 0 ? `<b class="r">❌ Kam: ${m(-n.diff)}</b>` : `<b style="color:var(--o)">⚠ Zyada: ${m(n.diff)}</b>`;
-  e.innerHTML = `<div class="w"><table style="max-width:520px;margin-top:10px">${row("Opening cash" + (n.usedSug ? " (pichhli ginti " + fd(n.prevD) + " se)" : ""), m(n.open))}${row("+ Aaj ki Cash sale", m(n.cs))}${row("+ Customer ka Cash payment", m(n.cp))}${row("− Cash kharcha (lender payment bhi)", m(n.ce))}${row("− Cash nikala", m(n.out))}${row("= Shaam ko galle mein hona chahiye", m(n.exp), true)}${n.counted !== null ? row("Asli ginti", m(n.counted)) : ""}</table></div>${!n.usedSug && n.sug !== null && n.open !== n.sug ? `<p style="margin-top:8px"><b class="r">⚠ Opening ${m(n.open)} hai, par pichhli ginti (${fd(n.prevD)}) ${m(n.sug)} thi: fark ${m(r2(n.open - n.sug))}</b></p>` : ""}<p style="margin-top:8px">${st}</p><p class="m">UPI aaj (bank mein, galle mein nahi): <b>${m(n.us)}</b></p>`;
+  const li = (sg, l, v_, c) => `<div class="gl-i"><span><i class="gl-s ${c}">${sg}</i>${l}</span><b>${m(v_)}</b></div>`;
+  const pill = n.diff === null ? `<span class="gl-p n">Asli ginti bharein to match dikhega</span>` : n.diff === 0 ? `<span class="gl-p g">✅ Galla match</span>` : n.diff < 0 ? `<span class="gl-p r">❌ Kam: ${m(-n.diff)}</span>` : `<span class="gl-p o">⚠ Zyada: ${m(n.diff)}</span>`;
+  e.innerHTML = `<div class="gl-grid"><div class="gl-list">
+    <div class="gl-i gl-b"><span>Opening cash${n.usedSug ? ` <small class="m">(pichhli ginti ${fd(n.prevD)} se)</small>` : ""}</span><b>${m(n.open)}</b></div>
+    ${li("+", "Aaj ki Cash sale", n.cs, "p")}${li("+", "Customer ka Cash payment", n.cp, "p")}${n.add ? li("+", "Cash dala (jeb / bank se)", n.add, "p") : ""}
+    ${li("−", "Cash kharcha (galle se, lender payment bhi)", n.ce, "mn")}${li("−", "Cash nikala", n.out, "mn")}
+  </div><div class="gl-r"><small>Shaam ko galle me hona chahiye</small><b>${m(n.exp)}</b>${n.counted !== null ? `<div class="gl-c">Asli ginti: <b>${m(n.counted)}</b></div>` : ""}${pill}</div></div>
+  ${n.oe ? `<p class="m" style="margin-top:8px">💼 Aaj ${m(n.oe)} ka Cash kharcha aapne <b>apni jeb se</b> kiya, wo galle se nahi ghata.</p>` : ""}${!n.usedSug && n.sug !== null && n.open !== n.sug ? `<p style="margin-top:6px"><b class="r">⚠ Opening ${m(n.open)} hai, par pichhli ginti (${fd(n.prevD)}) ${m(n.sug)} thi: fark ${m(r2(n.open - n.sug))}</b></p>` : ""}<p class="m" style="margin-top:6px">📱 UPI aaj (bank me, galle me nahi): <b>${m(n.us)}</b></p>`;
 }
 function gallaSet(k, val){ D.galla = D.galla || {}; const g = D.galla[GD] = D.galla[GD] || {}; g[k] = val; save(); gallaUpd(); }
 
@@ -1625,8 +1644,8 @@ function copyTxt(t){
 function custRows(id){
   let b = 0; const hid = new Set();
   const mine = D.sales.filter(s => s.cid === cm(id)).map(s => { const a = firstLine(s) ? advOf(s) : []; a.forEach(p => hid.add(p.id)); return { s, adv: r2(a.reduce((q, p) => q + p.amt, 0)) }; });
-  return [...mine.map(({ s, adv }) => ({ d: s.d, t: s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : ""), tp: s.svc + (s.rmk ? " (" + s.rmk + ")" : ""), dr: s.amt, cr: r2(s.rec + adv), id: s.id, c: "sales" })),
-    ...D.payments.filter(p => p.cid === cm(id) && !hid.has(p.id)).map(p => ({ d: p.d, t: "Payment received (" + p.mode + ")" + (p.rmk ? " - " + p.rmk : ""), dr: 0, cr: p.amt, id: p.id, c: "payments" }))]
+  return [...mine.map(({ s, adv }) => ({ d: s.d, t: s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : ""), tp: s.svc + (s.rmk ? " (" + s.rmk + ")" : ""), dr: s.amt, cr: r2(s.rec + adv), md: [...new Set([s.rec > 0 ? s.mode : "", ...(firstLine(s) ? advOf(s) : []).map(p => p.mode)].filter(Boolean))].join(" + "), id: s.id, c: "sales" })),
+    ...D.payments.filter(p => p.cid === cm(id) && !hid.has(p.id)).map(p => ({ d: p.d, t: "Payment received (" + p.mode + ")" + (p.rmk ? " - " + p.rmk : ""), dr: 0, cr: p.amt, md: p.mode || "", id: p.id, c: "payments" }))]
     .sort((a, z) => a.d.localeCompare(z.d) || a.id.localeCompare(z.id)).map(x => (b += x.dr - x.cr, { ...x, b }));
 }
 function upiBox(){
@@ -1684,7 +1703,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.classList && e.target.classList.contains("amt")) { const st = calcField(e.target); if (st === "changed" || st === "bad") { e.preventDefault(); return; } }
   if (e.key === "Enter" && e.target.matches("input:not([type=file])")) { const b = e.target.closest(".row, .mb, .sb"); const bt = b && b.querySelector(".b"); if (bt) { e.preventDefault(); bt.click(); } }
 });
-const APP_VER = "V40", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
+const APP_VER = "V42", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
 { const e = $("ver"); if (e) e.textContent = verTxt(); document.querySelectorAll("#setup .sb,#lock .sb").forEach(x => { x.dataset.v = verTxt(); }); }
 boot();
 </script>
