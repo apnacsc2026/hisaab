@@ -475,8 +475,8 @@ function del(c, id){
   if (c === "customers" && (D.sales.some(s => s.cid === id) || D.payments.some(p => p.cid === id) || D.jobs.some(j => j.cid === id) || D.inv.some(i => i.cid === id))) return alert("Is customer ki entries (sales, receipt ya Work Tracker) hain. Pehle unhe hatayein, ya Merge karein.");
   if (c === "parties" && D.ptx.some(t => t.pid === id)) return alert("Is lender ki entries hain. Pehle unhe delete karein.");
   const item = D[c].find(x => x.id === id), idx = D[c].indexOf(item);
-  const ex = c === "sales" && item && !D.sales.some(x => x.id !== id && item.vid && x.vid === item.vid) ? advOf(item) : [];
-  if (!confirm("Ye entry delete karein?" + (ex.length ? "\n\nIs entry ke saath mila extra / advance payment (" + m(r2(ex.reduce((a, p) => a + p.amt, 0))) + ") bhi delete hoga." : ""))) return;
+  const ex = c === "sales" && item ? [...(!D.sales.some(x => x.id !== id && item.vid && x.vid === item.vid) ? advOf(item) : []), ...D.payments.filter(p => p.sid === id)] : [];
+  if (!confirm("Ye entry delete karein?" + (ex.length ? "\n\nIs entry se jude payment (" + m(r2(ex.reduce((a, p) => a + p.amt, 0))) + ") bhi delete honge." : ""))) return;
   if (c === "ptx" && item && item.auto && item.mk) { const pp = D.parties.find(x => x.id === item.pid); if (pp) pp.autoSkip = [...(pp.autoSkip || []), item.mk]; }
   D[c] = D[c].filter(x => x.id !== id); if (ex.length) D.payments = D.payments.filter(p => !ex.includes(p)); save(); r();
   lastDel = { c, item, idx, ex }; toast("Entry delete ho gayi.", "Undo", "undoDel()");
@@ -661,7 +661,7 @@ function sTbl(){
   ["d", "c", "s", "r", "a", "g", "p", "m"].forEach(k => { const e = $("ar_" + k); if (e) e.textContent = SS.k === k ? (SS.dir > 0 ? "▲" : "▼") : ""; });
   const td = (c, x) => `<td${c ? ` class="${c}"` : ""}>${x}</td>`;
   $("sinfo").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${rs.length} entries | Kul amount ${m(rs.reduce((a, x) => a + x.amt, 0))} | Received ${m(rs.reduce((a, x) => a + x.rec, 0))} | Pending ${m(rs.reduce((a, x) => a + pm[x.id], 0))} <span style="color:var(--m)">(customer ka payment purane bill se kat'ta hai) &nbsp;|&nbsp; <b class="g">Hara = poora mila</b> &nbsp; <b class="r">Laal = baaki</b></span></p>`;
-  $("sbody").innerHTML = rs.map(s => { const pe = pm[s.id]; return `<tr class="${pe > 0 ? "rd" : "gr"}">${td("nw", fd(s.d))}${td("", `<button class="lk" onclick="openLedger('${s.cid || "W"}')">${h(cn(s.cid))}</button>`)}${td("sv", h(s.svc))}${td("rk", h(s.rmk))}${td("nw", m(s.amt) + (sFee(s) > 0 ? `<br><small style="color:var(--m)">Svc ${m(sSvc(s))} + Fees ${m(sFee(s))}</small>` : ""))}${td("nw", m(s.rec) + (advAmt(s) > 0 ? `<br><small style="color:var(--m)">+ ${m(advAmt(s))} advance</small>` : ""))}${td("nw", pe ? `<span class="r">${m(pe)}</span>` : "-")}${td("nw", s.rec > 0 || advAmt(s) > 0 ? s.mode : "-")}${td("", X("sales", s.id))}</tr>`; }).join("") || `<tr><td colspan="9" class="e">Koi entry nahi mili</td></tr>`;
+  $("sbody").innerHTML = rs.map(s => { const pe = pm[s.id]; return `<tr class="${pe > 0 ? "rd" : "gr"}">${td("nw", fd(s.d))}${td("", `<button class="lk" onclick="openLedger('${s.cid || "W"}')">${h(cn(s.cid))}</button>`)}${td("sv", h(s.svc))}${td("rk", h(s.rmk))}${td("nw", m(s.amt) + (sFee(s) > 0 ? `<br><small style="color:var(--m)">Svc ${m(sSvc(s))} + Fees ${m(sFee(s))}</small>` : ""))}${td("nw", m(s.rec) + (advAmt(s) > 0 ? `<br><small style="color:var(--m)">+ ${m(advAmt(s))} advance</small>` : "") + (lkAmt(s) > 0 ? `<br><small style="color:var(--m)">+ ${m(lkAmt(s))} baad me mila</small>` : ""))}${td("nw", pe ? `<span class="r">${m(pe)}</span>` : "-")}${td("nw", s.rec > 0 || advAmt(s) > 0 || lkAmt(s) > 0 ? s.mode + (lkAmt(s) > 0 && D.payments.some(p => p.sid === s.id && p.mode !== s.mode) ? " + " + D.payments.filter(p => p.sid === s.id && p.mode !== s.mode)[0].mode : "") : "-")}${td("", X("sales", s.id))}</tr>`; }).join("") || `<tr><td colspan="9" class="e">Koi entry nahi mili</td></tr>`;
 }
 function vCust(){
   if (L) return vLedger();
@@ -679,8 +679,26 @@ function vLedger(){
   const rows = custRows(L).reverse();
   return `<h2>${h(c.name)} <button class="g2" onclick="L=null;r()">Back</button> <button class="b" onclick="printCust()">Print / Save PDF</button> ${cbal(L) > 0 && waNum(c.phone) ? `<button class="g2" onclick="waRemind()">WhatsApp par QR bhejein</button>` : ""}</h2><p class="m">${h(c.phone)} ${h(c.addr)}${c.gstin ? " | GSTIN: " + h(c.gstin) : ""}${c.aka && c.aka.length ? "<br>Pehle ke naam (merge hue): " + h(c.aka.join(", ")) : ""}</p>
   <div class="cards"><div class="c"><small>${balLbl(cbal(L))}</small><b class="${balCls(cbal(L))}">${m(cbal(L))}</b></div></div>
-  ${upiBox()}<div class="box"><div class="row">${F("Date", `<input type="date" id="pd" value="${today()}">`)}${F("Amount received", `<input type="text" inputmode="decimal" class="amt" id="pa">`)}${F("Mode", `<select id="pm"><option>Cash</option><option>UPI</option></select>`)}${F("Remark", `<input id="pk" style="width:200px">`)}<button class="b" onclick="addPay()">Add payment</button></div></div>
-  <div class="box"><p class="m"><b class="r">Laal</b> = service di (customer se lena hai) &nbsp;|&nbsp; <b class="g">Hara</b> = customer se paisa mila</p><div class="row" style="margin-bottom:10px">${F("Statement: From", `<input type="date" id="lf" value="${h(LF)}" onchange="LF=this.value;cLed()">`)}${F("To", `<input type="date" id="lt" value="${h(LT)}" onchange="LT=this.value;cLed()">`)}${ordSel("cLed()")}${stmBtns("c")}<button class="g2" onclick="LF=LT='';r()">Saari entry</button></div><div id="cled"></div></div>`;
+  ${upiBox()}${L === "W" ? `<div class="box"><p class="m">💵 Walk-in ka paisa jis entry ka mila hai, us entry ke saamne <b>"Payment"</b> button dabakar jodein (tareekh bhi chun sakte ho).</p></div>` : `<div class="box"><div class="row">${F("Date", `<input type="date" id="pd" value="${today()}">`)}${F("Amount received", `<input type="text" inputmode="decimal" class="amt" id="pa">`)}${F("Mode", `<select id="pm"><option>Cash</option><option>UPI</option></select>`)}${F("Remark", `<input id="pk" style="width:200px">`)}<button class="b" onclick="addPay()">Add payment</button></div></div>`}
+  <div class="box"><p class="m"><b class="r">Laal</b> = paisa baaki hai (ya kuch bhi nahi mila) &nbsp;|&nbsp; <b class="g">Hara</b> = poora paisa mil gaya</p><div class="row" style="margin-bottom:10px">${F("Statement: From", `<input type="date" id="lf" value="${h(LF)}" onchange="LF=this.value;cLed()">`)}${F("To", `<input type="date" id="lt" value="${h(LT)}" onchange="LT=this.value;cLed()">`)}${ordSel("cLed()")}${stmBtns("c")}<button class="g2" onclick="LF=LT='';r()">Saari entry</button></div><div id="cled"></div></div>`;
+}
+function wkPayDel(pid, sid){
+  const p = D.payments.find(x => x.id === pid); if (!p || !confirm("Ye payment (" + fd(p.d) + ", " + m(p.amt) + ", " + p.mode + ") hata dein? Entry ka paisa dobara baaki ho jayega.")) return;
+  D.payments = D.payments.filter(x => x.id !== pid); save(); r(); closeEd(); edit("sales", sid);
+}
+function wkPay(id){
+  const s = D.sales.find(x => x.id === id); if (!s) return; const pe = pendMap()[id] || 0; if (pe <= 0) return alert("Is entry me kuch baaki nahi hai.");
+  $("md").innerHTML = `<div class="mb"><h3>Payment mila</h3><p class="m">${h(s.svc)}${s.rmk ? " (" + h(s.rmk) + ")" : ""} | Entry: ${fd(s.d)} | Baaki: <b class="r">${m(pe)}</b></p>${F("Kitna mila (₹)", `<input id="wpa" type="text" inputmode="decimal" class="amt" value="${pe}">`)}${F("Kis tareekh ko mila", `<input id="wpd" type="date" value="${today()}">`)}${F("Mode", `<select id="wpm"><option>Cash</option><option>UPI</option></select>`)}${F("Remark (optional)", `<input id="wpk">`)}<div class="row" style="margin-top:8px"><button class="b" onclick="wkPaySave('${id}')">Payment save karein</button><button class="g2" onclick="closeEd()">Cancel</button></div></div>`;
+  $("md").style.display = "flex";
+}
+function wkPaySave(id){
+  const s = D.sales.find(x => x.id === id); if (!s) return; const pe = pendMap()[id] || 0, a = N(v("wpa")), d = v("wpd") || today();
+  if (need(a > 0, "Kitna paisa mila, wo bharein.")) return;
+  if (need(a <= pe + 0.001, "Is entry me sirf " + m(pe) + " baaki hai. Isse zyada payment nahi jud sakta.")) return;
+  if (d < s.d && !confirm("Payment ki tareekh (" + fd(d) + ") entry ki tareekh (" + fd(s.d) + ") se pehle hai. Phir bhi save karein?")) return;
+  if (d > today() && !confirm("Ye tareekh aage ki hai (" + fd(d) + "). Phir bhi save karein?")) return;
+  D.payments.push({ id: uid(), d, cid: s.cid || "", amt: r2(a), mode: v("wpm"), rmk: v("wpk").trim(), sid: id });
+  closeEd(); save(); r(); toast("Payment " + m(r2(a)) + " (" + v("wpm") + ") jud gaya.", "OK", "document.getElementById('toast').style.display='none'");
 }
 function addPay(){ const a = N(v("pa")); if (need(a, "Amount bharein.")) return; D.payments.push({ id: uid(), d: v("pd") || today(), cid: cm(L), amt: a, mode: v("pm"), rmk: v("pk").trim() }); save(); r(); }
 const CATS = ["Customer ke kaam ka kharcha (fees, bill)", "Paper, Ink aur Stationery", "Printer / Mantra EMI", "Loan EMI aur Charges", "Repair", "Banner / Advertising", "Furniture aur Shop saman", "Registration / Retailer ID", "Transport aur Misc", "Shop rent", "Electricity", "Internet", "Salary", "Other"];
@@ -870,6 +888,8 @@ function edit(c, id){
   if (c === "sales") {
     $("e_fee").closest("label").insertAdjacentHTML("afterend", F("Service Charge (meri income)", `<input id="e_svcx" type="text" inputmode="decimal" class="amt">`));
     $("e_amt").oninput = () => edSync("amt"); $("e_fee").oninput = () => edSync("fee"); $("e_svcx").oninput = () => edSync("svc"); edSync("fee");
+    const lp = D.payments.filter(p => p.sid === o.id);
+    if (lp.length) $("e_rec").closest("label").insertAdjacentHTML("afterend", `<div class="box" style="margin:8px 0;padding:10px"><b>Is entry par baad me mile payment:</b>${lp.map(p => `<div class="row" style="justify-content:space-between;align-items:center;margin-top:6px"><span>${fd(p.d)} · ${m(p.amt)} · ${h(p.mode)}${p.rmk ? " · " + h(p.rmk) : ""}</span><button class="g2" onclick="wkPayDel('${p.id}','${o.id}')">Hatayein</button></div>`).join("")}</div>`);
   }
   $("md").style.display = "flex";
 }
@@ -887,6 +907,7 @@ function saveEd(){
   if (ak && c !== "gstRet" && !(N(v("e_" + ak)) > 0)) return alert("Amount 0 se zyada bharein.");
   if (c === "sales" && !v("e_svc").trim()) return alert("Service ka naam bharein.");
   if (c === "sales" && N(v("e_fee")) > N(v("e_amt"))) return alert("Fees total amount se zyada nahi ho sakti.");
+  if (c === "sales") { const lkS = r2(D.payments.filter(p => p.sid === id).reduce((a, p) => a + p.amt, 0)); if (lkS > 0 && N(v("e_amt")) - Math.min(N(v("e_rec")), N(v("e_amt"))) < lkS - 0.001) return alert("Is entry par " + m(lkS) + " ka payment juda hai. Amount ya Received itna kam nahi ho sakta."); }
   if (c === "sales" && !o.invId) {
     const over = Math.max(0, r2(N(v("e_rec")) - N(v("e_amt"))));
     if (over > 0 && !v("e_cid")) return alert("Received amount se zyada hai. Walk-in me extra save nahi hota: customer chunein ya Received kam karein.");
@@ -913,7 +934,7 @@ function printDay(){
   const d = v("drd") || today(), ss = D.sales.filter(s => s.d === d), ps = D.payments.filter(p => p.d === d), es = allExp().filter(e => e.d === d);
   const rec = md => r2(ss.filter(s => s.mode === md).reduce((a, s) => a + s.rec, 0) + ps.filter(p => p.mode === md).reduce((a, p) => a + p.amt, 0));
   const billed = r2(ss.reduce((a, s) => a + s.amt, 0)), got = r2(ss.reduce((a, s) => a + s.rec, 0) + ps.reduce((a, p) => a + p.amt, 0)), exp = r2(es.reduce((a, e) => a + e.amt, 0)), fees = r2(ss.reduce((a, x) => a + sFee(x), 0)), inc = r2(ss.reduce((a, x) => a + incSale(x), 0) + payInc().filter(x => x.d === d).reduce((a, x) => a + x.a, 0));
-  const rows = [...ss.map(s => R("Sale", h(cn(s.cid)), h(s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : "")), m(s.amt), m(s.rec), s.rec > 0 ? s.mode : "-")), ...ps.map(p => R("Payment", h(cn(p.cid)), "Baaki ka payment" + (p.rmk ? " (" + h(p.rmk) + ")" : ""), "", m(p.amt), p.mode)), ...es.map(e => R("Kharcha", h(e.cat), h(e.note), m(e.amt), "-", e.mode + (e.mode !== "UPI" && e.src === "Apni jeb" ? " (jeb se)" : "")))];
+  const rows = [...ss.map(s => R("Sale", h(cn(s.cid)), h(s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : "")), m(s.amt), m(s.rec), s.rec > 0 ? s.mode : "-")), ...ps.map(p => R("Payment", h(cn(p.cid)), "Baaki ka payment" + (p.sid ? ": " + h(saleLbl(p.sid)) : "") + (p.rmk ? " (" + h(p.rmk) + ")" : ""), "", m(p.amt), p.mode)), ...es.map(e => R("Kharcha", h(e.cat), h(e.note), m(e.amt), "-", e.mode + (e.mode !== "UPI" && e.src === "Apni jeb" ? " (jeb se)" : "")))];
   printDoc("Din ka report: " + fd(d), "Sales " + ss.length + " | Customer payment " + ps.length + " | Kharcha " + es.length, ["Type", "Customer / Naam", "Detail", "Amount", "Mila", "Mode"], rows, `Kul bill: <b>${m(billed)}</b> | <span style="color:#d92d20">Udhaar (baaki): <b>${m(r2(ss.reduce((a, s) => a + Math.max(0, s.amt - s.rec), 0)))}</b></span> | Cash mila: <b>${m(rec("Cash"))}</b> | UPI mila: <b>${m(rec("UPI"))}</b> | Kul mila: <b>${m(got)}</b><br>${fees ? `Fees (customer ka kharcha, income nahi): <b>${m(fees)}</b> | ` : ""}Meri income: <b>${m(inc)}</b> | Kharcha: <b>${m(exp)}</b> | Net (income - kharcha): <b>${m(r2(inc - exp))}</b>`, "Din-report-" + d);
 }
 function printCust(){
@@ -1032,11 +1053,12 @@ const CB = {};
 const cbS = p => CB[p] = CB[p] || { items: [], idx: 0, q: "", next: p === "rc" ? "rs" : p === "jc" ? "js" : "ss" };
 const cbHtml = (p, label, id = "", name = "Walk-in") => `<div style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--m)">${label}<div class="cb"><input type="text" id="${p}n" autocomplete="off" value="${h(name)}" onfocus="cbOpen('${p}')" oninput="cbType('${p}')" onkeydown="cbKey('${p}',event)" onblur="cbBlur('${p}')"><input type="hidden" id="${p}" value="${h(id)}"><div id="${p}l" class="cbl"></div></div><div id="${p}b"></div></div>`;
 function pendMap(){
-  const out = {}, g = {};
+  const out = {}, g = {}, lk = {};
+  D.payments.forEach(p => { if (p.sid) lk[p.sid] = r2((lk[p.sid] || 0) + p.amt); });
   D.sales.forEach(s => (g[s.cid] = g[s.cid] || []).push(s));
   for (const cid in g) {
-    let pool = D.payments.filter(p => p.cid === cid).reduce((a, p) => a + p.amt, 0);
-    g[cid].sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)).forEach(s => { let pe = s.amt - s.rec; pe = r2(pe); if (pe > 0 && pool > 0) { const t = Math.min(pe, pool); pe = r2(pe - t); pool = r2(pool - t); } out[s.id] = pe; });
+    let pool = D.payments.filter(p => p.cid === cid && !p.sid).reduce((a, p) => a + p.amt, 0);
+    g[cid].sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)).forEach(s => { let pe = r2(s.amt - s.rec - (lk[s.id] || 0)); if (pe > 0 && pool > 0) { const t = Math.min(pe, pool); pe = r2(pe - t); pool = r2(pool - t); } out[s.id] = pe; });
   }
   return out;
 }
@@ -1270,13 +1292,14 @@ const sSvc = s => r2(s.amt - sFee(s));
 const svcNet = s => sFee(s) > 0 ? Math.max(0, r2(sSvc(s) - (s.gst || 0))) : r2(s.amt * nfS(s));
 const incSale = s => sFee(s) > 0 ? svcNet(s) : s.rec * nfS(s);
 function payInc(){
-  const out = [], g = {}, pp = {};
+  const out = [], g = {}, pp = {}, lk = {};
   D.sales.forEach(s => (g[s.cid] = g[s.cid] || []).push(s));
-  D.payments.forEach(p => (pp[p.cid] = pp[p.cid] || []).push({ d: p.d, id: p.id, left: p.amt }));
+  D.payments.forEach(p => { if (p.sid) (lk[p.sid] = lk[p.sid] || []).push(p); else (pp[p.cid] = pp[p.cid] || []).push({ d: p.d, id: p.id, left: p.amt }); });
   new Set([...Object.keys(g), ...Object.keys(pp)]).forEach(cid => {
     const ps = (pp[cid] || []).sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)); let i = 0;
     (g[cid] || []).sort((a, b) => a.d.localeCompare(b.d) || a.id.localeCompare(b.id)).forEach(s => {
       let pe = r2(s.amt - s.rec);
+      (lk[s.id] || []).forEach(p => { const t = Math.min(pe, p.amt); if (t > 0) { pe = r2(pe - t); if (sFee(s) <= 0) out.push({ d: p.d > s.d ? p.d : s.d, a: t }); } });
       while (pe > 0 && i < ps.length) { const t = Math.min(pe, ps[i].left); ps[i].left = r2(ps[i].left - t); pe = r2(pe - t); if (sFee(s) <= 0 && t > 0) out.push({ d: ps[i].d > s.d ? ps[i].d : s.d, a: t }); if (ps[i].left <= 0) i++; }
     });
     /* bacha hua (advance) paisa customer ka hai, jab tak kisi service me use na ho income nahi */
@@ -1515,8 +1538,9 @@ function cLedRows(){
   return { all, rows, open, close: rows.length ? rows[0].b : open };
 }
 function cLed(){
+  const pmW = L === "W" ? pendMap() : {};
   const { rows, open, close } = cLedRows(), per = !!(LF || LT), asc = LORD === "asc", ord = asc ? rows.slice().reverse() : rows;
-  const f = x => RC(x.c === "payments" ? "gr" : "rd", fd(x.d), h(x.t), x.dr ? `<b class="r">${m(x.dr)}</b>` : "", x.cr ? `<span style="white-space:nowrap"><b class="g">${m(x.cr)}</b>${x.md ? ` <span class="m">(${h(x.md)})</span>` : ""}</span>` : "", m(x.b), X(x.c, x.id));
+  const f = x => RC(x.c === "payments" || (x.dr > 0 && x.cr >= x.dr - 0.001) ? "gr" : "rd", fd(x.d), h(x.t), x.dr ? `<b class="r">${m(x.dr)}</b>` : "", x.cr ? `<span style="white-space:nowrap"><b class="g">${m(x.cr)}</b>${x.md ? ` <span class="m">(${h(x.md)})</span>` : ""}</span>` : "", m(x.b), (L === "W" && x.c === "sales" && (pmW[x.id] || 0) > 0 ? `<button class="g2" style="margin-right:4px;padding:4px 10px;font-size:12px" onclick="wkPay('${x.id}')">💵 Payment</button>` : "") + X(x.c, x.id));
   const op = per ? [RC("op", LF ? fd(LF) : "", "Opening balance (pichla baaki)", "", "", m(open), "")] : [];
   $("cled").innerHTML = T(["Date", "Detail", "Charge", "Paid", "Balance", ""], [...(asc ? op : []), ...ord.map(f), ...(asc ? [] : op), RC("tt", "", per ? "Total (is period ka) / Closing" : "Total", `<b class="r">${m(sumR(rows, "dr"))}</b>`, `<b class="g">${m(sumR(rows, "cr"))}</b>`, m(close), "")]);
 }
@@ -1641,10 +1665,15 @@ function copyTxt(t){
   else { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) { alert("Number: " + t); } document.body.removeChild(ta); }
 }
 
+const lkAmt = s => r2(D.payments.filter(p => p.sid === s.id).reduce((a, p) => a + p.amt, 0));
+const saleLbl = sid => { const x = D.sales.find(q => q.id === sid); return x ? x.svc + (x.rmk ? " (" + x.rmk + ")" : "") : ""; };
 function custRows(id){
+  const pmL = pendMap(), lkAll = {};
+  D.payments.forEach(p => { if (p.sid) (lkAll[p.sid] = lkAll[p.sid] || []).push(p); });
+  const lkT = (s, lk) => { if (!lk.length) return ""; const pd = pmL[s.id] || 0, one = lk.length === 1 && pd <= 0, parts = lk.map(p => (one ? "" : m(p.amt) + " mila ") + fd(p.d) + " ko " + p.mode); return pd > 0 ? " [" + parts.join(", ") + " | Baaki " + m(pd) + "]" : " [Poora mil gaya" + (one ? " " : ": ") + parts.join(", ") + "]"; };
   let b = 0; const hid = new Set();
-  const mine = D.sales.filter(s => s.cid === cm(id)).map(s => { const a = firstLine(s) ? advOf(s) : []; a.forEach(p => hid.add(p.id)); return { s, adv: r2(a.reduce((q, p) => q + p.amt, 0)) }; });
-  return [...mine.map(({ s, adv }) => ({ d: s.d, t: s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : ""), tp: s.svc + (s.rmk ? " (" + s.rmk + ")" : ""), dr: s.amt, cr: r2(s.rec + adv), md: [...new Set([s.rec > 0 ? s.mode : "", ...(firstLine(s) ? advOf(s) : []).map(p => p.mode)].filter(Boolean))].join(" + "), id: s.id, c: "sales" })),
+  const mine = D.sales.filter(s => s.cid === cm(id)).map(s => { const a = firstLine(s) ? advOf(s) : [], lk = (lkAll[s.id] || []).slice().sort((x, y) => x.d.localeCompare(y.d) || x.id.localeCompare(y.id)); a.forEach(p => hid.add(p.id)); lk.forEach(p => hid.add(p.id)); return { s, a, lk, adv: r2(a.reduce((q, p) => q + p.amt, 0)), lks: r2(lk.reduce((q, p) => q + p.amt, 0)) }; });
+  return [...mine.map(({ s, a, lk, adv, lks }) => ({ d: s.d, t: s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + (sFee(s) > 0 ? " [Service " + m(sSvc(s)) + " + Fees " + m(sFee(s)) + "]" : "") + lkT(s, lk), tp: s.svc + (s.rmk ? " (" + s.rmk + ")" : "") + lkT(s, lk), dr: s.amt, cr: r2(s.rec + adv + lks), md: [...new Set([s.rec > 0 ? s.mode : "", ...a.map(p => p.mode), ...lk.map(p => p.mode)].filter(Boolean))].join(" + "), lk: lk.length > 0, pd: pmL[s.id] || 0, id: s.id, c: "sales" })),
     ...D.payments.filter(p => p.cid === cm(id) && !hid.has(p.id)).map(p => ({ d: p.d, t: "Payment received (" + p.mode + ")" + (p.rmk ? " - " + p.rmk : ""), dr: 0, cr: p.amt, md: p.mode || "", id: p.id, c: "payments" }))]
     .sort((a, z) => a.d.localeCompare(z.d) || a.id.localeCompare(z.id)).map(x => (b += x.dr - x.cr, { ...x, b }));
 }
@@ -1654,7 +1683,7 @@ function upiBox(){
   return `<div class="box"><h3>UPI se payment lein</h3><div class="upi">
   <div class="ul"><div class="seg">${D.upis.map((a, i) => `<button type="button" class="${i === D.upiSel ? "on" : ""}" onclick="selUpi(${i})"><strong>${h(a.label)}</strong><small>${h(a.id)}</small></button>`).join("")}</div>
   <div class="row">${F("Amount lena hai (₹)", `<input type="text" inputmode="decimal" class="amt" id="qa" value="${bal}" oninput="drawQR()" style="width:160px">`)}</div>
-  <p class="m">Payment aane ke baad neeche "Add payment" (mode UPI) se entry jod dein.</p></div>
+  <p class="m">${L === "W" ? "Payment aane ke baad, jis entry ka paisa mila hai uske saamne \"Payment\" button se entry jod dein." : "Payment aane ke baad neeche \"Add payment\" (mode UPI) se entry jod dein."}</p></div>
   <div class="qrw"><div id="lqr"></div><b id="qamt"></b><div class="m" id="qpay"></div></div></div></div>`;
 }
 function selUpi(i){ D.upiSel = i; save(); r(); }
@@ -1703,7 +1732,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.classList && e.target.classList.contains("amt")) { const st = calcField(e.target); if (st === "changed" || st === "bad") { e.preventDefault(); return; } }
   if (e.key === "Enter" && e.target.matches("input:not([type=file])")) { const b = e.target.closest(".row, .mb, .sb"); const bt = b && b.querySelector(".b"); if (bt) { e.preventDefault(); bt.click(); } }
 });
-const APP_VER = "V42", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
+const APP_VER = "V45", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
 { const e = $("ver"); if (e) e.textContent = verTxt(); document.querySelectorAll("#setup .sb,#lock .sb").forEach(x => { x.dataset.v = verTxt(); }); }
 boot();
 </script>
