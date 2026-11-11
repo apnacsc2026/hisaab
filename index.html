@@ -500,6 +500,7 @@ function syncAdv(o, adv, ex){
 let lastDel = null, toastT;
 function toast(msg, lbl, fn){ const t = $("toast"); t.innerHTML = h(msg) + `<button onclick="${fn}">${lbl}</button>`; t.style.display = "block"; clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = "none"; }, 10000); }
 function undoDel(){ const d = lastDel; if (!d) return; D[d.c].splice(Math.min(d.idx, D[d.c].length), 0, d.item); if (d.ex && d.ex.length) D.payments.push(...d.ex); lastDel = null; $("toast").style.display = "none"; save(); r(); }
+const bigAmt = a => a > 500000 && !confirm("Amount bahut bada hai (" + m(a) + "). Kya ye sahi hai?");
 function need(c, msg){ if (!c) { alert(msg); return true; } }
 
 /* ---------- views ---------- */
@@ -608,12 +609,13 @@ function udharSave(){
 }
 function addSale(o){
   o = o || {};
-  const ls = SL.map(l => ({ svc: l.svc.trim(), rmk: l.rmk.trim(), fee: Math.max(0, N(l.fee)), amt: N(l.amt) })).filter(l => l.amt || l.svc);
+  const ls = SL.map(l => ({ svc: l.svc.trim(), rmk: l.rmk.trim(), fee: Math.max(0, r2(N(l.fee))), amt: r2(N(l.amt)) })).filter(l => l.amt || l.svc);
   if (need(ls.length && ls.every(l => l.svc && l.amt > 0), "Har line mein service aur Total Lena bharein.")) return;
   if (need(ls.every(l => l.fee <= l.amt), "Fees, Total Lena se zyada nahi ho sakti.")) return;
   if (need(SL.every(l => !(l.sv && N(l.sv) > N(l.amt))), "Service Charge, Total Lena se zyada nahi ho sakta.")) return;
-  const d = v("sd") || today(), cid = o.cid || v("sc"), total = r2(ls.reduce((a, l) => a + l.amt, 0)), recIn = v("sr") === "" ? total : N(v("sr")), rec0 = Math.max(0, Math.min(recIn, total)), gen = v("sk").trim(), mode = v("sm");
+  const d = v("sd") || today(), cid = o.cid || v("sc"), total = r2(ls.reduce((a, l) => a + l.amt, 0)), recIn = v("sr") === "" ? total : r2(N(v("sr"))), rec0 = Math.max(0, Math.min(recIn, total)), gen = v("sk").trim(), mode = v("sm");
   if (rec0 < total && !cid && !o.wk) return udharAsk(gen);
+  if (bigAmt(total)) return;
   if (cid && ls.some(l => D.sales.some(s => s.d === d && s.cid === cid && s.amt === l.amt && s.svc.toLowerCase() === l.svc.toLowerCase())) && !confirm("Is customer ki usi din, usi service aur usi amount ki entry pehle se hai. Dobara jodein?")) return;
   const vid = uid();
   if (recIn > total) {
@@ -700,7 +702,7 @@ function wkPaySave(id){
   D.payments.push({ id: uid(), d, cid: s.cid || "", amt: r2(a), mode: v("wpm"), rmk: v("wpk").trim(), sid: id });
   closeEd(); save(); r(); toast("Payment " + m(r2(a)) + " (" + v("wpm") + ") jud gaya.", "OK", "document.getElementById('toast').style.display='none'");
 }
-function addPay(){ const a = N(v("pa")); if (need(a, "Amount bharein.")) return; D.payments.push({ id: uid(), d: v("pd") || today(), cid: cm(L), amt: a, mode: v("pm"), rmk: v("pk").trim() }); save(); r(); }
+function addPay(){ const a = r2(N(v("pa"))); if (need(a > 0, "Amount (0 se zyada) bharein.")) return; if (bigAmt(a)) return; D.payments.push({ id: uid(), d: v("pd") || today(), cid: cm(L), amt: a, mode: v("pm"), rmk: v("pk").trim() }); save(); r(); }
 const CATS = ["Customer ke kaam ka kharcha (fees, bill)", "Paper, Ink aur Stationery", "Printer / Mantra EMI", "Loan EMI aur Charges", "Repair", "Banner / Advertising", "Furniture aur Shop saman", "Registration / Retailer ID", "Transport aur Misc", "Shop rent", "Electricity", "Internet", "Salary", "Other"];
 function vExp(){
   const rows = allExp().filter(x => inFY(x.d));
@@ -713,7 +715,7 @@ function eTbl(){
   const rows = allExp().filter(x => inFY(x.d) && (!f || x.d >= f) && (!t || x.d <= t) && (!c || x.cat === c) && (!q || [x.cat, x.note, x.amt, fd(x.d)].join(" ").toLowerCase().includes(q)));
   $("etbl").innerHTML = `<p class="m">${FY === "all" ? "Sabhi saal" : "F-Y " + fyLbl(FY)} | ${rows.length} entries | Total: <b>${m(rows.reduce((a, x) => a + x.amt, 0))}</b> (lenders ko diye gaye paise bhi shamil)</p>` + T(["Date", "Category", "Amount", "Mode", "Note", ""], rows.map(x => R(fd(x.d), h(x.cat), m(x.amt), x.mode + (x.mode !== "UPI" && x.src === "Apni jeb" ? " (jeb se)" : ""), h(x.note), X(x.c, x.id))));
 }
-function addExp(){ const a = N(v("ea")); if (need(a && v("ec").trim(), "Category aur amount bharein.")) return; D.expenses.push({ id: uid(), d: v("ed") || today(), cat: v("ec").trim(), amt: a, note: v("en"), mode: v("em") || "Cash", src: v("em") === "Cash" ? v("esrc") : "", itc: $("ei") ? N(v("ei")) : 0 });
+function addExp(){ const a = r2(N(v("ea"))); if (need(a > 0 && v("ec").trim(), "Category aur amount (0 se zyada) bharein.")) return; if (bigAmt(a)) return; D.expenses.push({ id: uid(), d: v("ed") || today(), cat: v("ec").trim(), amt: a, note: v("en"), mode: v("em") || "Cash", src: v("em") === "Cash" ? v("esrc") : "", itc: $("ei") ? N(v("ei")) : 0 });
   const dd = v("ed") || today(); if (FY !== "all" && fyOf(dd) !== FY) FY = fyOf(dd);
   save(); r(); }
 const PF = { n: "", t: "", b: "" };
@@ -810,12 +812,12 @@ function autoDue(){
   if (n) { save(); toast(n + " auto entry (kiraya/bill) judi."); if (V === "lend") r(); }
   return n;
 }
-function addPtx(){ const pp = D.parties.find(x => x.id === P); if (pp && pp.closed) return alert("Ye account close hai. Pehle Reopen karein."); const a = N(v("ta")); if (need(a, "Amount bharein.")) return; D.ptx.push({ id: uid(), pid: P, d: v("td") || today(), kind: v("tk"), amt: a, note: v("tn"), mode: v("tm") || "Cash", src: v("tm") === "Cash" ? v("tsrc") : "" }); save(); r(); }
+function addPtx(){ const pp = D.parties.find(x => x.id === P); if (pp && pp.closed) return alert("Ye account close hai. Pehle Reopen karein."); const a = r2(N(v("ta"))); if (need(a > 0, "Amount (0 se zyada) bharein.")) return; if (bigAmt(a)) return; D.ptx.push({ id: uid(), pid: P, d: v("td") || today(), kind: v("tk"), amt: a, note: v("tn"), mode: v("tm") || "Cash", src: v("tm") === "Cash" ? v("tsrc") : "" }); save(); r(); }
 function vAst(){
   return `<h2>Assets</h2><div class="box"><div class="row">${F("Asset", `<input id="an" placeholder="PC, table, chair...">`)}${F("Date", `<input type="date" id="ad" value="${today()}">`)}${F("Price (each)", `<input type="text" inputmode="decimal" class="amt" id="ac" style="width:120px">`)}${F("Qty", `<input type="number" id="aq" value="1" min="1" style="width:70px">`)}<button class="b" onclick="addAst()">Add asset</button></div></div>
   <div class="box"><p class="m">Total asset value: <b>${m(D.assets.reduce((a, x) => a + x.cost * x.qty, 0))}</b></p>${T(["Asset", "Date", "Price", "Qty", "Total", ""], D.assets.map(x => R(h(x.name), fd(x.d), m(x.cost), x.qty, m(x.cost * x.qty), X("assets", x.id))))}</div>`;
 }
-function addAst(){ if (need(v("an").trim() && N(v("ac")), "Asset ka naam aur price bharein.")) return; D.assets.push({ id: uid(), name: v("an").trim(), d: v("ad") || today(), cost: N(v("ac")), qty: Math.max(1, N(v("aq"))) }); save(); r(); }
+function addAst(){ if (need(v("an").trim() && N(v("ac")) > 0, "Asset ka naam aur price (0 se zyada) bharein.")) return; D.assets.push({ id: uid(), name: v("an").trim(), d: v("ad") || today(), cost: r2(N(v("ac"))), qty: Math.max(1, N(v("aq"))) }); save(); r(); }
 function vBk(){
   return `<h2>Data folder, Backup aur Excel</h2>
   <div class="tb"><button class="g2" onclick="uiAll(true,BKS)">Sab kholein</button><button class="g2" onclick="uiAll(false,BKS)">Sab band karein</button></div>
@@ -917,7 +919,7 @@ function saveEd(){
   if (c === "customers" && v("e_phone").trim() && !waNum(v("e_phone")) && !confirm("Phone number sahi nahi lag raha (10 ank chahiye). Phir bhi save karein?")) return;
   if (c === "customers") { const nn = v("e_name"); if (!nn.trim()) return alert("Naam bharein."); if (nameTaken(nn, id)) return alert("Is naam ka doosra customer pehle se hai. Dono ek hi hain to Merge use karein."); }
   const advB = c === "sales" ? advOf(o) : [], exT = c === "sales" && !o.invId ? Math.max(0, r2(N(v("e_rec")) - N(v("e_amt")))) : 0, fl = c === "sales" ? firstLine(o) : true;
-  for (const [k, , t] of FD[c]) { if (k === "gstin" && !D.gst.on) continue; const x = v("e_" + k); o[k] = t === "n" ? N(x) : x; }
+  for (const [k, , t] of FD[c]) { if (k === "gstin" && !D.gst.on) continue; const x = v("e_" + k); o[k] = t === "n" ? r2(N(x)) : x; }
   if (c === "customers" && o.gstin) { o.gstin = o.gstin.trim().toUpperCase(); if (!GSTIN_RE.test(o.gstin) && !confirm("GSTIN ka format sahi nahi lag raha. Phir bhi save karein?")) return; }
   if (c === "jobs" && o.st === "Delivered" && !o.upd) o.upd = today();
   if (c === "sales") { o.rec = Math.min(o.rec, o.amt); o.fee = Math.min(o.fee || 0, o.amt); if (o.svc.trim() && !D.svc.includes(o.svc)) D.svc.push(o.svc); if (!o.invId && fl) syncAdv(o, advB, exT); }
@@ -1216,8 +1218,9 @@ function saveInv(pr){
   const gstin = on ? (IS.gstin || "").trim().toUpperCase() : "";
   if (gstin && !GSTIN_RE.test(gstin) && !confirm("GSTIN ka format sahi nahi lag raha. Phir bhi save karein?")) return;
   if (c && gstin && !c.gstin && confirm("Is customer ke master mein GSTIN save kar dein? (agli baar apne aap aa jayega)")) c.gstin = gstin;
-  const total = r2(ls.reduce((a, l) => a + l.total, 0)), rec = Math.max(0, Math.min(N(v("rr")), total)), pm = v("rpm");
+  const total = r2(ls.reduce((a, l) => a + l.total, 0)), rec = Math.max(0, Math.min(r2(N(v("rr"))), total)), pm = v("rpm");
   if (need(total > 0, "Discount ke baad kul amount 0 ho gaya. Discount kam karein.")) return;
+  if (bigAmt(total)) return;
   if (need(!ls.bad, "Discount aapke service charge (fees ke alawa wala hissa) se zyada nahi ho sakta. Discount kam karein.")) return;
   if (need(IL.every(l => N(l.fee) <= N(l.amt) && !(l.sv && N(l.sv) > N(l.amt))), "Fees ya Service Charge, Total Lena se zyada nahi ho sakta.")) return;
   if (N(v("rr")) > total && !confirm("Received (" + m(N(v("rr"))) + ") kul amount (" + m(total) + ") se zyada hai. Sirf " + m(total) + " record hoga. Aage badhein?")) return;
@@ -1732,7 +1735,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.classList && e.target.classList.contains("amt")) { const st = calcField(e.target); if (st === "changed" || st === "bad") { e.preventDefault(); return; } }
   if (e.key === "Enter" && e.target.matches("input:not([type=file])")) { const b = e.target.closest(".row, .mb, .sb"); const bt = b && b.querySelector(".b"); if (bt) { e.preventDefault(); bt.click(); } }
 });
-const APP_VER = "V45", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
+const APP_VER = "V46", verTxt = () => "CSC Hisaab " + APP_VER + " · " + (/^https?:/.test(location.protocol) ? "Online" : "Local");
 { const e = $("ver"); if (e) e.textContent = verTxt(); document.querySelectorAll("#setup .sb,#lock .sb").forEach(x => { x.dataset.v = verTxt(); }); }
 boot();
 </script>
